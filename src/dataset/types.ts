@@ -3,6 +3,7 @@ import type { YoloBox } from './projection';
 
 export const CLASS_NAMES=['Tugboat','Towline_Taut','Towline_Slack','Ship_Stern'] as const;
 export interface CaptureSample {
+  towline?:import('./scenarios').TowlineScenario;
   id:string;
   index:number;
   params:SimulationParams;
@@ -13,6 +14,7 @@ export interface CaptureSample {
 }
 export interface FrameLabel {classId:number;box:YoloBox}
 export interface CapturedFrame {
+  towlineCapture?:import('./geometry').TowlineCapture;
   jpeg:string;
   labels:FrameLabel[];
   camera:{position:number[];quaternion:number[];fov:number;aspect:number;near:number;far:number};

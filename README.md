@@ -15,37 +15,20 @@
 - 상시 접근 가능한 비상 예인줄 분리/재연결
 - 실제 시뮬레이션 관측값을 기록하는 시나리오 점검창; 완료/취소 시 원래 설정 복원
 - Normal Map 기반 수면, 맑음~해무 무작위화, 45RPM 이상 백색 후류(115RPM에서 방출량·크기 2배)
-- AI 데이터 생성 모드: JPEG + YOLO 라벨 ZIP 자동 다운로드
+- 예인줄 데이터 생성: RGB PNG + 이진 마스크 + 기하학적 정답 JSON, 로컬 배치 저장
 
-## YOLO 합성 데이터 생성
+## Towline Vision 합성 데이터 생성
 
-우측 패널의 **AI 데이터 생성 모드**를 켜고 이미지 수와 시드를 입력한 뒤 **AI 데이터셋 캡처**를 누릅니다. 기본 100장, 1~500장, 고정 960×540 JPEG 품질 0.9입니다. ZIP 생성 후 자동 다운로드하며 수동 다운로드 버튼도 제공합니다. 생성 중 취소할 수 있고 기존 운항 설정·카메라 구도는 유지됩니다.
-
-```text
-synthetic_tug_dataset.zip
-├─ images/frame_0001.jpg ...
-├─ labels/frame_0001.txt ...
-├─ classes.txt
-└─ metadata.json
-```
-
-| ID | 클래스 | 기준 |
-|---|---|---|
-| 0 | Tugboat | 예인선. 자체 CCTV에서는 자선 라벨 제외 |
-| 1 | Towline_Taut | 320kN 이상 또는 CRITICAL, 직선형 줄 |
-| 2 | Towline_Slack | 나머지 연결 상태, 하중·길이에 따른 현수선 |
-| 3 | Ship_Stern | 대형선의 선미 영역(local Z ≤ -21) |
-
-라벨 형식은 `class_id x_center y_center width height`입니다. Box3 투영 후 near/far 평면과 화면 경계를 잘라 0~1로 정규화합니다. 화면 밖·완전 가림 표본은 제외하며 부분 가림은 전체 3D 경계상자의 투영 영역을 사용합니다. 픽셀 단위 가시 영역 라벨은 아니므로 학습 전에 미리보기와 검증 스크립트로 확인하세요. 객체가 보이지 않는 이미지는 빈 라벨의 음성 표본으로 저장됩니다.
-
-시드는 조명·안개·파도·조향·줄 길이·RPM·CCTV/FOV·카메라 미세 위치와 물리 상태를 재현합니다. GPU와 실시간 회전 부품 때문에 픽셀까지 동일함을 보장하지 않습니다. 학습/검증용 데이터는 서로 다른 시드와 수집 실행으로 분리하고 실제 영상으로 별도 검증해야 합니다. AI 모델 학습과 실제 센서 연결은 이 내보내기 기능에 포함되지 않습니다.
+우측 **Dataset Generation · 개발자** 모드에서 RGB/마스크 미리보기, 단일 샘플 ZIP, 폴더 단위 파일 생성을 사용할 수 있습니다. 기본 500장, 1280×720 PNG + 예인줄 이진 마스크 + 기하학적 정답 JSON이며, 시나리오 단위 70/20/10 분할과 5개 Sag 생성 구간을 사용합니다. 대량 생성은 로컬 스트리밍 명령을 권장합니다.
 
 ```sh
-npm test
-python scripts/verify-dataset.py synthetic_tug_dataset.zip --count 100
-# Pillow 설치 시 이미지 검사와 라벨 미리보기 제공
-python scripts/verify-dataset.py synthetic_tug_dataset.zip --preview preview.png
+npm ci
+npm run dataset:generate -- --count 10 --out towline_dataset_smoke
+npm run dataset:generate
+npm run dataset:validate -- towline_dataset --count 500
 ```
+
+Chrome이 필요하며, Python 검증기는 Pillow를 사용합니다. 상세 설치·미리보기·생성·스키마·한계는 **[README_DATASET.md](README_DATASET.md)**를 읽으세요. Sag는 기하학적 특징이며 장력·위험 등급이 아닙니다. 이전 JPEG/YOLO 내보내기 설명은 과거 설계 문서에 남아 있고, 현재 개발자 UI는 이 예인줄 데이터셋을 생성합니다.
 
 ## 실행
 

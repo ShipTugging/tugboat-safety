@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Box3, Mesh, Object3D, PerspectiveCamera, Raycaster, Vector2, Vector3 } from 'three';
+import { TowlineMaskPass } from '../dataset/mask';
+import { applyTowlineCamera } from '../dataset/scenarios';
 import { applyDatasetCamera } from '../dataset/camera';
 import { projectBoxToYolo } from '../dataset/projection';
 import type { CaptureSample, CapturedFrame, FrameLabel, SceneCaptureApi } from '../dataset/types';
@@ -51,6 +53,8 @@ export function DatasetCaptureBridge({sample,tug,ship,rope,onReady}:Props) {
   const {gl,scene,camera}=useThree();
   const pending=useRef<Pending|null>(null);
   const captureCamera=useMemo(()=>new PerspectiveCamera(),[]);
+  const maskPass=useMemo(()=>new TowlineMaskPass(),[]);
+  useEffect(()=>()=>maskPass.dispose(),[maskPass]);
   useEffect(()=>{
     const fail=(error:Error)=>{const p=pending.current;pending.current=null;if(p){p.clean();p.reject(error);}};
     onReady({capture:(id,signal)=>new Promise((resolve,reject)=>{
@@ -75,6 +79,13 @@ export function DatasetCaptureBridge({sample,tug,ship,rope,onReady}:Props) {
     const oldSize=gl.getSize(new Vector2()), oldDpr=gl.getPixelRatio();
     try {
       if(!tug.current||!ship.current)throw new Error('선박 모델이 준비되지 않았습니다.');
+      if(sample.towline) {
+        if(!rope.current)throw new Error('Towline mesh is unavailable');
+        applyTowlineCamera(captureCamera,sample);scene.updateMatrixWorld(true);
+        const result=maskPass.capture(gl,scene,captureCamera,rope.current,sample);
+        p.resolve({towlineCapture:result,jpeg:result.rgb,labels:[],camera:{position:captureCamera.position.toArray(),quaternion:captureCamera.quaternion.toArray(),fov:captureCamera.fov,aspect:captureCamera.aspect,near:captureCamera.near,far:captureCamera.far}});
+        return;
+      }
       applyDatasetCamera(captureCamera,sample.params,sample.telemetry,sample.width/sample.height);
       gl.setPixelRatio(1);gl.setSize(sample.width,sample.height,false);
       scene.updateMatrixWorld(true);

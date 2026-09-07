@@ -11,6 +11,7 @@ interface TowingLineProps {
   quickReleaseActive: boolean;
   lineLength: number;
   datasetMode?: boolean;
+  scenario?:import('../dataset/scenarios').TowlineScenario;
   meshRef?: React.Ref<THREE.Mesh>;
 }
 
@@ -23,6 +24,7 @@ export const TowingLine: React.FC<TowingLineProps> = ({
   lineLength,
   datasetMode=false,
   meshRef,
+  scenario,
 }) => {
   // Calculate curve points for catenary line
   const { geometry, color, emissiveIntensity } = useMemo(() => {
@@ -31,8 +33,8 @@ export const TowingLine: React.FC<TowingLineProps> = ({
 
     // Catenary sag depends inversely on tension
     // Higher tension = straighter line; Lower tension = more sag
-    const curve = createTowlineCurve(p1,p2,lineLength,tensionKn,girtingStatus);
-    const geom = new THREE.TubeGeometry(curve, 64, 0.085, 8, false);
+    const curve = createTowlineCurve(p1,p2,lineLength,tensionKn,girtingStatus,scenario?.sagParameter);
+    const geom = new THREE.TubeGeometry(curve, scenario?128:64, scenario?.radius??0.085, 8, false);
 
     // Color logic
     let lineColor = '#d8c4a0';
@@ -51,10 +53,10 @@ export const TowingLine: React.FC<TowingLineProps> = ({
 
     return {
       geometry: geom,
-      color: lineColor,
+      color: scenario ? new THREE.Color().setRGB(scenario.brightness,scenario.brightness*.9,scenario.brightness*.72) : lineColor,
       emissiveIntensity: intensity,
     };
-  }, [start, end, tensionKn, girtingStatus, lineLength, datasetMode]);
+  }, [start, end, tensionKn, girtingStatus, lineLength, datasetMode, scenario]);
 
   useEffect(() => () => geometry.dispose(), [geometry]);
   // If quick release activated, line is detached

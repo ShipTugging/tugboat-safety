@@ -86,17 +86,17 @@ export function Scene3D({ params, telemetry, onUpdatePhysics, onSelectCamera, on
   const suction = telemetry.suctionStatus === 'CRITICAL';
   const hasAlert = girting || suction || telemetry.inWashZone;
   const tugRef=useRef<THREE.Group>(null), shipRef=useRef<THREE.Group>(null), ropeRef=useRef<THREE.Mesh>(null);
-  const anchors=getTowlineAnchors(telemetry);
+  const anchors=getTowlineAnchors(telemetry,captureSample?.towline?.heading);
   return <div className="scene-viewport">
     <Canvas shadows={quality === 'high'} dpr={quality === 'high' ? [1, 1.5] : 1} gl={{antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance',toneMapping:THREE.ACESFilmicToneMapping,toneMappingExposure:1.1}}>
       <PerspectiveCamera makeDefault position={[76,48,-100]} fov={43} near={.3} far={1800}/>
       {liveCameraMode === 'orbit' && <OrbitControls enabled={!captureBusy} makeDefault enableDamping dampingFactor={.06} minDistance={25} maxDistance={260} maxPolarAngle={Math.PI/2-.08} target={[4,2,-17]}/>}
       <CameraController params={params} telemetry={telemetry} onUpdatePhysics={onUpdatePhysics} captureBusy={captureBusy} captureSample={captureSample}/>
-      <HarborEnvironment showTacticalGrid={analysis&&!datasetMode} timeOfDay={params.timeOfDay} telemetry={telemetry} shipSpeed={params.shipSpeed} propellerRpm={params.propellerRpm} highQuality={quality === 'high'} fogDensity={params.fogDensity} sunIntensity={params.sunIntensity} waveStrength={params.waveStrength} simulationTime={captureSample?.time}/>
-      <group ref={shipRef}><LargeShip position={telemetry.shipPosition} shipSpeedKnots={params.shipSpeed} timeOfDay={params.timeOfDay}/></group>
-      <group ref={tugRef}><Tugboat position={telemetry.tugPosition} rotation={telemetry.tugRotation} isGirtingCritical={girting&&!datasetMode} isInWashTurbulence={telemetry.inWashZone&&!datasetMode} timeOfDay={params.timeOfDay}/></group>
+      <HarborEnvironment showTacticalGrid={analysis&&!datasetMode} timeOfDay={params.timeOfDay} telemetry={telemetry} shipSpeed={params.shipSpeed} propellerRpm={params.propellerRpm} highQuality={quality === 'high'} fogDensity={params.fogDensity} sunIntensity={params.sunIntensity} waveStrength={params.waveStrength} simulationTime={captureSample?.time} sunPosition={captureSample?.towline?.sunPosition}/>
+      <group ref={shipRef} position={telemetry.shipPosition} rotation={[0,captureSample?.towline?.heading??0,0]}><LargeShip position={[0,0,0]} simulationTime={captureSample?.time} shipSpeedKnots={params.shipSpeed} timeOfDay={params.timeOfDay}/></group>
+      <group ref={tugRef}><Tugboat simulationTime={captureSample?.time} position={telemetry.tugPosition} rotation={telemetry.tugRotation} isGirtingCritical={girting&&!datasetMode} isInWashTurbulence={telemetry.inWashZone&&!datasetMode} timeOfDay={params.timeOfDay}/></group>
       {params.timeOfDay==='night'&&<MarineFloodlights telemetry={telemetry} shadows={quality==='high'}/>}
-      <TowingLine meshRef={ropeRef} start={anchors.start.toArray()} end={anchors.end.toArray()} tensionKn={telemetry.lineTensionKn} girtingStatus={telemetry.girtingStatus} quickReleaseActive={params.quickReleaseActive} lineLength={params.towLineLength} datasetMode={datasetMode}/>
+      <TowingLine scenario={captureSample?.towline} meshRef={ropeRef} start={anchors.start.toArray()} end={anchors.end.toArray()} tensionKn={telemetry.lineTensionKn} girtingStatus={telemetry.girtingStatus} quickReleaseActive={params.quickReleaseActive} lineLength={params.towLineLength} datasetMode={datasetMode}/>
       <HazardZones enabled={analysis&&!datasetMode} inWashZone={telemetry.inWashZone} hullDistanceM={telemetry.hullDistanceM} lineAngleDeg={telemetry.lineAngleDeg} tugPosition={telemetry.tugPosition} shipSpeed={params.shipSpeed} propellerRpm={params.propellerRpm}/>
       <DatasetCaptureBridge sample={captureSample} tug={tugRef} ship={shipRef} rope={ropeRef} onReady={onCaptureReady}/>
     </Canvas>

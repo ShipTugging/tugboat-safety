@@ -28,3 +28,7 @@ dist-ssr
 # Never commit local credentials or environment files.
 .env
 .env.*
+
+# Generated datasets and local validation artifacts
+towline_dataset*/
+artifacts/

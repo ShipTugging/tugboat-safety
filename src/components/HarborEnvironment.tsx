@@ -5,6 +5,7 @@ import { SternFoam } from './SternFoam';
 import { TelemetryState, TimeOfDay } from '../types/maritime';
 
 interface Props {
+  sunPosition?:[number,number,number];
   showTacticalGrid?:boolean; timeOfDay?:TimeOfDay; telemetry:TelemetryState;
   shipSpeed:number; propellerRpm:number; highQuality:boolean;
   fogDensity?:number; sunIntensity?:number; waveStrength?:number; simulationTime?:number;
@@ -18,9 +19,9 @@ function Crane({x,z}:{x:number;z:number}) {
     <mesh position={[0,14,23]}><boxGeometry args={[9,.7,2]}/><meshStandardMaterial color="#a6aaa0"/></mesh>
   </group>;
 }
-export function HarborEnvironment({showTacticalGrid,timeOfDay='day',telemetry,shipSpeed,propellerRpm,highQuality,fogDensity=.0014,sunIntensity=1,waveStrength=1,simulationTime}:Props) {
+export function HarborEnvironment({showTacticalGrid,timeOfDay='day',telemetry,shipSpeed,propellerRpm,highQuality,fogDensity=.0014,sunIntensity=1,waveStrength=1,simulationTime,sunPosition}:Props) {
   const night=timeOfDay==='night', sunset=timeOfDay==='sunset';
-  const sun:[number,number,number]=night?[-80,140,40]:sunset?[-160,40,70]:[-30,170,34];
+  const sun:[number,number,number]=sunPosition??(night?[-80,140,40]:sunset?[-160,40,70]:[-30,170,34]);
   const fogColor=night?'#142236':sunset?'#b99b85':'#b7ccd1';
   return <>
     <color attach="background" args={[night?'#111e31':sunset?'#b99b85':'#b7ccd1']}/>
