@@ -138,9 +138,23 @@ def compute_towline_angle_pixel(points: np.ndarray) -> float:
 def correct_roll(beta_deg: float, roll_deg: float,
                   y0: float = 10.0, z0: float = 70.0) -> float:
     """
+    Zou et al., "A Novel Vision-Based Towing Angle Estimation for
+    Maritime Towing Operations" (JMSE 2020), Eq. (11) 구현.
+
+    tan(gamma) = (y0*tan(alpha) - y0*tan(beta)) / (z0 + z0*tan(beta)*tan(alpha))
+
+    전제:
+    - 예인줄 부착점(P1)이 예인선 선수(bow) 중심축(centerline) 위에 있다고
+      가정 (x0=0). 논문 원본은 카메라를 선미(stern)에 달았지만, 우리
+      TUGGUARD 시나리오에서는 카메라/부착점이 선수(bow)에 위치함 —
+      공식 자체는 축 정의만 일관되면 되는 일반식이라 그대로 적용 가능.
+    - Pitch는 작다고 가정, Roll(alpha)만 보정 대상으로 삼음
+    - beta_deg는 raw 픽셀 좌표 차분으로 계산된 각도 — 카메라 초점거리/
+      오프셋은 두 점 차분 과정에서 소거되므로 별도 캘리브레이션 없이 사용 가능
+
     beta_deg: 화면(픽셀)에서 잰 예인줄 각도
     roll_deg: IMU에서 받은 배의 Roll 각도 (alpha)
-    y0, z0  : 카메라 설치 높이/거리 (캘리브레이션 값, 논문 예시 기본값)
+    y0, z0  : 카메라 설치 높이/거리 (m 단위, 배포 시 실측 캘리브레이션 필요)
     반환값  : Roll 왜곡을 보정한 3D 세계좌표계 상의 실제 예인줄 각도(gamma, 도)
     """
     beta = math.radians(beta_deg)
@@ -175,29 +189,57 @@ class RiskStateClassifier:
     최근 N프레임의 SagRatio / Towline Angle(gamma) / Roll rate를 보고
     Normal -> Loaded -> GirtingRisk -> Developing -> Critical 단계를 판단.
 
-    지금은 단순 threshold + 변화율 기반. 실측 데이터가 쌓이면
-    임계값을 재조정해야 함 (지금 값은 초기 추정치).
+    보정 근거: 김태희 팀원 제공 risk_transition_logs 시뮬레이션 데이터
+    (normal_steady, normal_to_girting_fast/slow, 2026-09-11) 분석 결과.
+
+    핵심 발견 3가지:
+    1. 정상 운항 시 예인줄 각도(gamma)는 0도가 아니라 설치 기준각
+       (baseline) 부근에서 유지됨 (실측 baseline ~= 22.4도). 즉
+       "절대각도"가 아니라 "기준각 대비 편차(Δ)"가 진짜 위험 지표임.
+    2. fast/slow 시나리오 모두 "기준각 대비 약 56도 벗어나면 WARNING급,
+       약 87도 벗어나면 CRITICAL급"으로 *동일한 각도값*에서 전이됨.
+       즉 시뮬레이터 판정은 변화 "속도"가 아니라 각도의 절대 편차로
+       결정되는 구조로 확인됨.
+    3. SagRatio는 단독 위험 지표로 부적합: slow 시나리오는 WARNING이
+       뜨기 한참 전에 이미 SagRatio가 0에 근접(완전히 팽팽해짐) ->
+       "얼마나 팽팽한지"만으론 위험 단계를 구분 못 함. 따라서 SagRatio는
+       "Loaded(당겨지기 시작함)" 1차 신호로만 사용하고, 실제 위험 단계
+       판정은 각도(Δ)가 맡는다. Roll rate도 WARNING 시점 값이 시나리오간
+       크게 달라(25.4 vs 3.5 deg/s) 단독 threshold로는 신뢰 불가하여
+       vision 있는 모드에서는 사용하지 않음 (imu_only 백업 모드에서만 사용).
+
+    주의: 위 threshold는 태희의 시뮬레이터 "내부 모델" 기준값이며,
+    시뮬레이터 산출물에 "Synthetic model data. No real-vessel safety
+    thresholds implied."라고 명시되어 있듯 실제 조선소 실측 데이터로
+    추후 재보정이 필요함.
     """
 
     STATES = ["Normal", "Loaded", "GirtingRisk", "Developing", "Critical"]
 
-    def __init__(self, window: int = 5):
+    # 시뮬레이터 실측 기반 threshold (risk_transition_logs, 2026-09-11 분석)
+    BASELINE_ANGLE_DEG = 22.4        # 정상 운항 시 기준각 (배포 시 실측 캘리브레이션 필요)
+    ANGLE_DELTA_RISK_DEG = 30.0      # 기준각 대비 이 이상 벗어나면 주의 단계
+    ANGLE_DELTA_WARNING_DEG = 56.0   # 실측: fast/slow 모두 이 근처에서 WARNING 전이
+    ANGLE_DELTA_CRITICAL_DEG = 87.0  # 실측: fast/slow 모두 이 근처에서 CRITICAL 전이
+    SAG_LOADED_THRESHOLD = 0.05      # 이 이하면 "팽팽해짐(Loaded)" 1차 신호
+
+    def __init__(self, window: int = 5, baseline_angle_deg: float = None):
         self.window = window
         self.sag_history: deque = deque(maxlen=window)
         self.angle_history: deque = deque(maxlen=window)
+        # 배포 환경마다 실측값으로 덮어쓸 수 있도록 옵션 제공
+        self.baseline_angle_deg = (
+            baseline_angle_deg if baseline_angle_deg is not None
+            else self.BASELINE_ANGLE_DEG
+        )
 
     def update(self, sag_ratio: float, gamma_deg: float,
                roll_rate_deg_s: float, fusion_mode: str) -> str:
         self.sag_history.append(sag_ratio)
-        self.angle_history.append(abs(gamma_deg))
+        self.angle_history.append(gamma_deg)
 
         sag_now = self.sag_history[-1]
-        angle_now = self.angle_history[-1]
-
-        sag_rate = 0.0
-        if len(self.sag_history) >= 2:
-            # 처짐이 급격히 "줄어드는" 속도 = 줄이 급격히 팽팽해지는 속도
-            sag_rate = self.sag_history[-2] - self.sag_history[-1]
+        angle_delta = abs(abs(gamma_deg) - self.baseline_angle_deg)
 
         # IMU 단독 모드일 때는 비전 값(sag, angle) 대신 Roll rate만으로 보수적으로 판단
         if fusion_mode == "imu_only":
@@ -207,14 +249,14 @@ class RiskStateClassifier:
                 return "GirtingRisk"
             return "Normal"
 
-        # --- 초기 threshold (실측 데이터로 추후 보정 필요) ---
-        if angle_now > 40 and sag_rate > 0.05:
+        # --- 시뮬레이터 실측 기반 threshold (기준각 대비 편차 중심 판단) ---
+        if angle_delta > self.ANGLE_DELTA_CRITICAL_DEG:
             return "Critical"
-        if angle_now > 30 and sag_rate > 0.02:
+        if angle_delta > self.ANGLE_DELTA_WARNING_DEG:
             return "Developing"
-        if angle_now > 20 or sag_rate > 0.01:
+        if angle_delta > self.ANGLE_DELTA_RISK_DEG:
             return "GirtingRisk"
-        if sag_now < 0.05:
+        if sag_now < self.SAG_LOADED_THRESHOLD:
             return "Loaded"
         return "Normal"
 
@@ -269,8 +311,9 @@ def run_dummy_scenario():
 
     # 시간에 따라 줄이 점점 팽팽해지고(sag 감소) 각도가 커지는(거딩 진행) 시나리오
     n_frames = 12
-    sag_values = np.linspace(0.25, 0.02, n_frames)      # 점점 팽팽해짐
-    angle_values = np.linspace(5, 45, n_frames)          # 점점 횡방향으로 꺾임
+    sag_values = np.linspace(0.25, 0.02, n_frames)       # 점점 팽팽해짐
+    # 기준각(baseline ~22.4도) 근처에서 시작해 위험 방향(편차 증가)으로 이동
+    angle_values = np.linspace(20, 95, n_frames)         # Δ가 0 -> 약 73까지 커짐
     roll_values = np.linspace(0, 12, n_frames)           # 배가 점점 기움
     confidences = [0.9] * 8 + [0.5, 0.5, 0.2, 0.2]       # 후반부에 시야 나빠짐(안개 가정)
 
