@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-AI = ROOT / 'ai'
+AI = Path(__file__).resolve().parents[1]
 OUTPUTS = AI / 'outputs'
 SPLITS = ('train', 'val', 'test')
 DEFAULT_MODEL = 'yolo26n-seg.pt'

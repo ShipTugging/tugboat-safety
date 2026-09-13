@@ -20,13 +20,15 @@ def prepare(source, output, expected, image_mode, minimum_iou):
     require(output != source and source not in output.parents, 'Derived data must be outside the source dataset')
     manifest = json.loads((source / 'generation_manifest.json').read_text())
     require(manifest['status'] == 'complete', 'Source generation is incomplete')
-    summary = list(csv.DictReader((source / 'dataset_summary.csv').open()))
+    with (source / 'dataset_summary.csv').open() as handle:
+        summary = list(csv.DictReader(handle))
     require(len(summary) == sum(expected.values()), 'Source CSV count does not match expected counts')
     by_id = {r['sample_id']: r for r in summary}
     require(len(by_id) == len(summary), 'Duplicate CSV sample IDs')
     # Complete all conversion and integrity checks before creating the derived dataset.
     records, labels, examples, seen_bins = [], {}, [], set()
     ids, seeds, groups = set(), set(), set()
+    parent_splits = {}
     fingerprints = {}
     for split in SPLITS:
         images = sorted((source / 'images' / split).glob('*.png'))
@@ -43,6 +45,10 @@ def prepare(source, output, expected, image_mode, minimum_iou):
             require(metadata['sampleId'] == sid and metadata['split'] == split == by_id[sid]['split'], f'Identity mismatch: {sid}')
             require(metadata['scenarioSeed'] not in seeds and metadata['scenarioGroup'] not in groups, f'Duplicate scenario: {sid}')
             seeds.add(metadata['scenarioSeed']); groups.add(metadata['scenarioGroup'])
+            parent = metadata.get('parent_scenario_id')
+            if parent is not None:
+                require(parent_splits.setdefault(parent, split) == split, f'Cross-split parent scenario leakage: {parent}')
+                require(metadata['generation_run_id'] == manifest['generation_run_id'], f'Run mismatch: {sid}')
             for key, path in [('image',image),('mask',mask_path),('metadata',meta_path)]:
                 require(metadata['paths'][key] == str(path.relative_to(source)) == by_id[sid][key+'_path'], f'Path mismatch: {sid}')
                 fingerprints[str(path.relative_to(source))] = sha256(path)
