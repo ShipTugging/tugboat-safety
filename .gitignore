@@ -1,1 +1,5 @@
 .DS_Store
+
+# The twin application is a separate Git repository and is pushed to its own remote.
+# Keep the nested checkout and its generated artifacts out of this repository.
+tugboat-safety-twin/

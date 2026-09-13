@@ -56,4 +56,36 @@ class PolygonTests(unittest.TestCase):
         self.assertEqual(pixel_metrics(c)['dice'],.5)
 
 
+
+
+class ParentLeakageTests(unittest.TestCase):
+    def test_related_v2_variants_across_splits_are_rejected_before_output(self):
+        import csv
+        import json
+        import tempfile
+        from PIL import Image
+        from prepare_yolo_seg import prepare
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); source = root / 'source'; source.mkdir()
+            (source / 'generation_manifest.json').write_text(json.dumps({'status':'complete','generation_run_id':'run','configuration':{'imageWidth':32,'imageHeight':32},'splitCounts':{'train':1,'val':1,'test':1}}))
+            (source / 'README_DATASET.md').write_text('fixture')
+            rows = []
+            for i, split in enumerate(('train','val','test')):
+                sid = f'sample_{i:06d}'
+                paths = {'image':f'images/{split}/{sid}.png','mask':f'masks/{split}/{sid}_mask.png','metadata':f'metadata/{split}/{sid}.json'}
+                for path in paths.values(): (source/path).parent.mkdir(parents=True,exist_ok=True)
+                Image.new('RGB',(32,32),'gray').save(source/paths['image'])
+                mask = np.zeros((32,32),np.uint8); mask[10:15,3:28]=255
+                Image.fromarray(mask).save(source/paths['mask'])
+                meta = {'sampleId':sid,'split':split,'scenarioSeed':i,'scenarioGroup':sid,'parent_scenario_id':'shared-parent','generation_run_id':'run','paths':paths,'image':{'width':32,'height':32},'sagBin':0}
+                (source/paths['metadata']).write_text(json.dumps(meta))
+                rows.append({'sample_id':sid,'split':split,**{key+'_path':value for key,value in paths.items()}})
+            with (source/'dataset_summary.csv').open('w',newline='') as f:
+                w=csv.DictWriter(f,fieldnames=rows[0].keys());w.writeheader();w.writerows(rows)
+            destination=root/'derived'
+            with self.assertRaisesRegex(ValueError,'parent scenario leakage'):
+                prepare(source,destination,dict(train=1,val=1,test=1),'copy',.98)
+            self.assertFalse(destination.exists())
+
+
 if __name__=='__main__':unittest.main()
