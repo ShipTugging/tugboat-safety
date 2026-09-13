@@ -32,3 +32,8 @@ dist-ssr
 # Generated datasets and local validation artifacts
 towline_dataset*/
 artifacts/
+
+# Python venv & cache
+tugguard-env/
+__pycache__/
+*.pyc
