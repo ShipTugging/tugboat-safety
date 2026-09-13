@@ -1,0 +1,2632 @@
+{
+  "input": "/Users/ijewon/WORKSPACES/tugboat-safety_IMU/data/raw/imu_windows.csv",
+  "clock": "simulation milliseconds; zero is simulator time origin, not Unix time",
+  "axis_convention": "+X lateral, +Y up, +Z bow; right-handed tug-local body frame",
+  "accelerometer": "specific force in m/s^2; upright rest [0, +9.80665, 0]",
+  "grouping": "independent (sequence_id, frame_id) groups; absent IDs form one sequence",
+  "sensor_fields": [
+    "timestamp_ms",
+    "ax_mps2",
+    "ay_mps2",
+    "az_mps2",
+    "gx_rad_s",
+    "gy_rad_s",
+    "gz_rad_s",
+    "roll_deg",
+    "pitch_deg",
+    "yaw_deg"
+  ],
+  "offline_metadata_fields": [
+    "frame_id",
+    "sequence_id",
+    "frame_timestamp_ms"
+  ],
+  "frame_id_count": 30,
+  "sequence_id_count": 30,
+  "group_count": 30,
+  "total_samples": 630,
+  "samples_per_group_histogram": {
+    "21": 30
+  },
+  "timestamp_range_ms": [
+    66736.655324455,
+    104281.218846329
+  ],
+  "timestamp_range_note": "inventory range only; independent scenes do not form a continuous recording",
+  "within_group_interval_counts": [
+    {
+      "interval_ms": 10.0,
+      "count": 600
+    }
+  ],
+  "estimated_sampling_rate_range_hz": [
+    100.0,
+    100.0
+  ],
+  "duplicate_timestamps_within_groups": 0,
+  "input_out_of_order_pairs_within_groups": 0,
+  "missing_required_values": 0,
+  "invalid_numeric_values": 0,
+  "missing_optional_orientation_values": {
+    "roll_deg": 0,
+    "pitch_deg": 0,
+    "yaw_deg": 0
+  },
+  "available_orientation_fields": [
+    "roll_deg",
+    "pitch_deg",
+    "yaw_deg"
+  ],
+  "peak_specific_force": {
+    "timestamp_ms": 75261.291037407,
+    "vector_mps2": [
+      -343.617997363,
+      252.49198278,
+      -86.27899001
+    ],
+    "magnitude_mps2": 435.05125398863083,
+    "magnitude_g": 44.362881716858546,
+    "frame_id": "frame_0013",
+    "sequence_id": "frame_0013"
+  },
+  "notes": [
+    "Exactly one input representation is loaded; CSV endpoints/JSON sample copies are not appended.",
+    "Invalid required data or invalid numeric orientation aborts the run with source context; no rows are silently dropped.",
+    "Duplicate timestamps are reported and retained; zero intervals are excluded from the rate estimate.",
+    "High accelerations are retained unchanged. Peak values are diagnostics, not risk features or validity thresholds.",
+    "Quaternion, simulator truth, and asset paths are outside the standardized V1 output.",
+    "Ideal model-derived data; real sensor noise, bias, latency, and clock synchronization are not modeled."
+  ],
+  "groups": [
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        71737.378253788,
+        71937.378253788
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.158421611,
+          0.192383112
+        ],
+        "ay_mps2": [
+          10.233944705,
+          10.425208166
+        ],
+        "az_mps2": [
+          -0.02578392,
+          0.109157648
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 71737.378253788,
+        "vector_mps2": [
+          0.192383112,
+          10.425208166,
+          -0.02578392
+        ],
+        "magnitude_mps2": 10.42701497921368,
+        "magnitude_g": 1.0632596227267905
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0001",
+      "frame_id": "frame_0001",
+      "frame_timestamp_ms": 71937.378253788
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        66968.373171259,
+        67168.373171259
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -0.100404887,
+          -0.043559232
+        ],
+        "ay_mps2": [
+          9.148833611,
+          9.314362351
+        ],
+        "az_mps2": [
+          -0.035657018,
+          -0.025116794
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 67168.373171259,
+        "vector_mps2": [
+          -0.100404887,
+          9.314362351,
+          -0.035657018
+        ],
+        "magnitude_mps2": 9.314971742844547,
+        "magnitude_g": 0.9498627709609854
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0002",
+      "frame_id": "frame_0002",
+      "frame_timestamp_ms": 67168.373171259
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        66736.655324455,
+        66936.655324455
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.070899472,
+          0.188106182
+        ],
+        "ay_mps2": [
+          9.0862915,
+          9.129768229
+        ],
+        "az_mps2": [
+          0.000247794,
+          0.017715364
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 66936.655324455,
+        "vector_mps2": [
+          0.188106182,
+          9.129768229,
+          0.017715364
+        ],
+        "magnitude_mps2": 9.131723040318626,
+        "magnitude_g": 0.9311766036637003
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0003",
+      "frame_id": "frame_0003",
+      "frame_timestamp_ms": 66936.655324455
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        87845.147254188,
+        88045.147254188
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.050347727,
+          0.077003553
+        ],
+        "ay_mps2": [
+          9.69034366,
+          9.976660592
+        ],
+        "az_mps2": [
+          -0.034287775,
+          0.115162279
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 87845.147254188,
+        "vector_mps2": [
+          0.077003553,
+          9.976660592,
+          -0.034287775
+        ],
+        "magnitude_mps2": 9.977016676675191,
+        "magnitude_g": 1.0173725662356863
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0004",
+      "frame_id": "frame_0004",
+      "frame_timestamp_ms": 88045.147254188
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        90946.284186821,
+        91146.284186821
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -244.828976581,
+          262.620590769
+        ],
+        "ay_mps2": [
+          -205.810724015,
+          230.569098144
+        ],
+        "az_mps2": [
+          -83.803832561,
+          89.119305331
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 90966.284186821,
+        "vector_mps2": [
+          258.431442736,
+          -112.131766168,
+          55.033171419
+        ],
+        "magnitude_mps2": 287.0348298290619,
+        "magnitude_g": 29.26940696660551
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0005",
+      "frame_id": "frame_0005",
+      "frame_timestamp_ms": 91146.284186821
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        82018.406284321,
+        82218.406284321
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          1.586441324,
+          1.669952642
+        ],
+        "ay_mps2": [
+          9.035464434,
+          9.207067969
+        ],
+        "az_mps2": [
+          -0.023620528,
+          0.017355241
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 82018.406284321,
+        "vector_mps2": [
+          1.669952642,
+          9.207067969,
+          0.017355241
+        ],
+        "magnitude_mps2": 9.357304292193279,
+        "magnitude_g": 0.9541794896517444
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0006",
+      "frame_id": "frame_0006",
+      "frame_timestamp_ms": 82218.406284321
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        89777.732400056,
+        89977.732400056
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.742784381,
+          0.755789291
+        ],
+        "ay_mps2": [
+          10.114350806,
+          10.336146335
+        ],
+        "az_mps2": [
+          0.100380234,
+          0.105546884
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 89977.732400056,
+        "vector_mps2": [
+          0.748600529,
+          10.336146335,
+          0.100380234
+        ],
+        "magnitude_mps2": 10.363705900976298,
+        "magnitude_g": 1.056803893376056
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0007",
+      "frame_id": "frame_0007",
+      "frame_timestamp_ms": 89977.732400056
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        80385.6652168,
+        80585.6652168
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -0.003207654,
+          0.001499059
+        ],
+        "ay_mps2": [
+          10.182551922,
+          10.389055614
+        ],
+        "az_mps2": [
+          0.099357671,
+          0.26098263
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 80585.6652168,
+        "vector_mps2": [
+          -0.003207654,
+          10.389055614,
+          0.26098263
+        ],
+        "magnitude_mps2": 10.392333653852287,
+        "magnitude_g": 1.059723111750933
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0008",
+      "frame_id": "frame_0008",
+      "frame_timestamp_ms": 80585.6652168
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        88464.449690524,
+        88664.449690524
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.234485653,
+          0.236283702
+        ],
+        "ay_mps2": [
+          9.085828045,
+          9.189911032
+        ],
+        "az_mps2": [
+          -0.394892847,
+          -0.38375992
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 88464.449690524,
+        "vector_mps2": [
+          0.235072319,
+          9.189911032,
+          -0.38375992
+        ],
+        "magnitude_mps2": 9.200923619258761,
+        "magnitude_g": 0.9382330988929718
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0009",
+      "frame_id": "frame_0009",
+      "frame_timestamp_ms": 88664.449690524
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        82126.147075444,
+        82326.147075444
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -0.180082129,
+          -0.152599818
+        ],
+        "ay_mps2": [
+          9.113186966,
+          9.246141713
+        ],
+        "az_mps2": [
+          -0.018257553,
+          -0.015834643
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 82126.147075444,
+        "vector_mps2": [
+          -0.152599818,
+          9.246141713,
+          -0.015834643
+        ],
+        "magnitude_mps2": 9.247414450388343,
+        "magnitude_g": 0.9429738443187371
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0010",
+      "frame_id": "frame_0010",
+      "frame_timestamp_ms": 82326.147075444
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        85264.71653292,
+        85464.71653292
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          1.41544757,
+          1.546439216
+        ],
+        "ay_mps2": [
+          9.005101166,
+          9.119971876
+        ],
+        "az_mps2": [
+          -0.098592021,
+          -0.01474912
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 85264.71653292,
+        "vector_mps2": [
+          1.546439216,
+          9.119971876,
+          -0.01474912
+        ],
+        "magnitude_mps2": 9.250166420359928,
+        "magnitude_g": 0.9432544671585026
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0011",
+      "frame_id": "frame_0011",
+      "frame_timestamp_ms": 85464.71653292
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        69915.676942952,
+        70115.676942952
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.078409737,
+          0.092280053
+        ],
+        "ay_mps2": [
+          9.083685081,
+          9.150937947
+        ],
+        "az_mps2": [
+          -0.227754205,
+          -0.141052661
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 70115.676942952,
+        "vector_mps2": [
+          0.078409737,
+          9.150937947,
+          -0.141052661
+        ],
+        "magnitude_mps2": 9.152360856624707,
+        "magnitude_g": 0.9332810752524774
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0012",
+      "frame_id": "frame_0012",
+      "frame_timestamp_ms": 70115.676942952
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        75171.291037407,
+        75371.291037407
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -343.617997363,
+          312.189798987
+        ],
+        "ay_mps2": [
+          -279.771249186,
+          277.251854963
+        ],
+        "az_mps2": [
+          -127.848873161,
+          127.794868068
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 75261.291037407,
+        "vector_mps2": [
+          -343.617997363,
+          252.49198278,
+          -86.27899001
+        ],
+        "magnitude_mps2": 435.05125398863083,
+        "magnitude_g": 44.362881716858546
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0013",
+      "frame_id": "frame_0013",
+      "frame_timestamp_ms": 75371.291037407
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        82540.451532658,
+        82740.451532658
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.018683028,
+          0.121419536
+        ],
+        "ay_mps2": [
+          9.094394557,
+          9.191028397
+        ],
+        "az_mps2": [
+          -0.031833814,
+          -0.008973653
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 82740.451532658,
+        "vector_mps2": [
+          0.121419536,
+          9.191028397,
+          -0.008973653
+        ],
+        "magnitude_mps2": 9.191834758340198,
+        "magnitude_g": 0.9373062930093558
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0014",
+      "frame_id": "frame_0014",
+      "frame_timestamp_ms": 82740.451532658
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        86837.182791419,
+        87037.182791419
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.046050534,
+          0.183010463
+        ],
+        "ay_mps2": [
+          10.364553876,
+          10.496173845
+        ],
+        "az_mps2": [
+          0.000871067,
+          0.015095325
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 87037.182791419,
+        "vector_mps2": [
+          0.183010463,
+          10.496173845,
+          0.015095325
+        ],
+        "magnitude_mps2": 10.497780054986217,
+        "magnitude_g": 1.0704756522345773
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0015",
+      "frame_id": "frame_0015",
+      "frame_timestamp_ms": 87037.182791419
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        82221.519304905,
+        82421.519304905
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          2.107326932,
+          2.129175373
+        ],
+        "ay_mps2": [
+          8.841881895,
+          8.920916365
+        ],
+        "az_mps2": [
+          -0.047931082,
+          -0.039824499
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 82221.519304905,
+        "vector_mps2": [
+          2.129175373,
+          8.920916365,
+          -0.043196213
+        ],
+        "magnitude_mps2": 9.171586693322592,
+        "magnitude_g": 0.9352415649913673
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0016",
+      "frame_id": "frame_0016",
+      "frame_timestamp_ms": 82421.519304905
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        87300.830026641,
+        87500.830026641
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.029771596,
+          0.033491309
+        ],
+        "ay_mps2": [
+          10.380280711,
+          10.502369361
+        ],
+        "az_mps2": [
+          0.223082363,
+          0.252633859
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 87300.830026641,
+        "vector_mps2": [
+          0.030005661,
+          10.502369361,
+          0.251664368
+        ],
+        "magnitude_mps2": 10.505427049324764,
+        "magnitude_g": 1.071255428645334
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0017",
+      "frame_id": "frame_0017",
+      "frame_timestamp_ms": 87500.830026641
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        96351.973005608,
+        96551.973005608
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.424348071,
+          0.534787191
+        ],
+        "ay_mps2": [
+          10.423109936,
+          10.51403283
+        ],
+        "az_mps2": [
+          0.054856943,
+          0.076664339
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 96551.973005608,
+        "vector_mps2": [
+          0.424348071,
+          10.51403283,
+          0.054856943
+        ],
+        "magnitude_mps2": 10.522735714626426,
+        "magnitude_g": 1.0730204213086454
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0018",
+      "frame_id": "frame_0018",
+      "frame_timestamp_ms": 96551.973005608
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        73040.477708038,
+        73240.477708038
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -0.19660683,
+          -0.083813418
+        ],
+        "ay_mps2": [
+          9.0862424,
+          9.140390033
+        ],
+        "az_mps2": [
+          -0.050074963,
+          -0.029693946
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 73240.477708038,
+        "vector_mps2": [
+          -0.19660683,
+          9.140390033,
+          -0.050074963
+        ],
+        "magnitude_mps2": 9.142641396384736,
+        "magnitude_g": 0.9322899661336681
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0019",
+      "frame_id": "frame_0019",
+      "frame_timestamp_ms": 73240.477708038
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        98663.041446432,
+        98863.041446432
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.001074984,
+          0.007516092
+        ],
+        "ay_mps2": [
+          9.397721612,
+          9.663095924
+        ],
+        "az_mps2": [
+          0.297244629,
+          0.330818363
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 98863.041446432,
+        "vector_mps2": [
+          0.007516092,
+          9.663095924,
+          0.297244629
+        ],
+        "magnitude_mps2": 9.667669507049448,
+        "magnitude_g": 0.9858279338050658
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0020",
+      "frame_id": "frame_0020",
+      "frame_timestamp_ms": 98863.041446432
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        89475.018396601,
+        89675.018396601
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          1.894777274,
+          1.902582208
+        ],
+        "ay_mps2": [
+          9.531687634,
+          9.823741794
+        ],
+        "az_mps2": [
+          -0.064120901,
+          0.009552247
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 89675.018396601,
+        "vector_mps2": [
+          1.896343099,
+          9.823741794,
+          0.009552247
+        ],
+        "magnitude_mps2": 10.0051042588136,
+        "magnitude_g": 1.0202367025246746
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0021",
+      "frame_id": "frame_0021",
+      "frame_timestamp_ms": 89675.018396601
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        84899.058029633,
+        85099.058029633
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -0.1224831,
+          -0.056651411
+        ],
+        "ay_mps2": [
+          9.428861544,
+          9.696780608
+        ],
+        "az_mps2": [
+          -0.001839294,
+          -0.000861979
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 84899.058029633,
+        "vector_mps2": [
+          -0.1224831,
+          9.696780608,
+          -0.001839294
+        ],
+        "magnitude_mps2": 9.697554312942664,
+        "magnitude_g": 0.9888753359141669
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0022",
+      "frame_id": "frame_0022",
+      "frame_timestamp_ms": 85099.058029633
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        93591.254443061,
+        93791.254443061
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -0.324069552,
+          -0.291148383
+        ],
+        "ay_mps2": [
+          10.372234937,
+          10.497740131
+        ],
+        "az_mps2": [
+          -0.04972366,
+          -0.045232379
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 93591.254443061,
+        "vector_mps2": [
+          -0.323569818,
+          10.497740131,
+          -0.049661213
+        ],
+        "magnitude_mps2": 10.50284302087797,
+        "magnitude_g": 1.0709919310751348
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0023",
+      "frame_id": "frame_0023",
+      "frame_timestamp_ms": 93791.254443061
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        90345.144348834,
+        90545.144348834
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.090527137,
+          0.12476412
+        ],
+        "ay_mps2": [
+          10.454514683,
+          10.524848388
+        ],
+        "az_mps2": [
+          -0.06226156,
+          0.096655283
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 90345.144348834,
+        "vector_mps2": [
+          0.12476412,
+          10.524848388,
+          -0.06226156
+        ],
+        "magnitude_mps2": 10.525771999139979,
+        "magnitude_g": 1.0733300361632137
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0024",
+      "frame_id": "frame_0024",
+      "frame_timestamp_ms": 90545.144348834
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        94035.35563888,
+        94235.35563888
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -56.9695636,
+          53.13705503
+        ],
+        "ay_mps2": [
+          -38.540481665,
+          55.140600425
+        ],
+        "az_mps2": [
+          -25.376896659,
+          25.501288658
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 94105.35563888,
+        "vector_mps2": [
+          -53.919530723,
+          55.140600425,
+          -15.790191336
+        ],
+        "magnitude_mps2": 78.72186323408219,
+        "magnitude_g": 8.02739602556247
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0025",
+      "frame_id": "frame_0025",
+      "frame_timestamp_ms": 94235.35563888
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        104081.218846329,
+        104281.218846329
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          1.741025581,
+          1.875602773
+        ],
+        "ay_mps2": [
+          8.96303884,
+          9.088015721
+        ],
+        "az_mps2": [
+          0.106395735,
+          0.193473938
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 104081.218846329,
+        "vector_mps2": [
+          1.875602773,
+          9.088015721,
+          0.193473938
+        ],
+        "magnitude_mps2": 9.281559549553817,
+        "magnitude_g": 0.9464556754400144
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0026",
+      "frame_id": "frame_0026",
+      "frame_timestamp_ms": 104281.218846329
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        93815.701012239,
+        94015.701012239
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.187919957,
+          0.282254181
+        ],
+        "ay_mps2": [
+          10.124613767,
+          10.351648191
+        ],
+        "az_mps2": [
+          -0.134435499,
+          -0.091558542
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 93815.701012239,
+        "vector_mps2": [
+          0.187919957,
+          10.351648191,
+          -0.134435499
+        ],
+        "magnitude_mps2": 10.354226532381057,
+        "magnitude_g": 1.05583726679152
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0027",
+      "frame_id": "frame_0027",
+      "frame_timestamp_ms": 94015.701012239
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        99418.794991206,
+        99618.794991206
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.137367705,
+          0.164641532
+        ],
+        "ay_mps2": [
+          10.377353831,
+          10.501449641
+        ],
+        "az_mps2": [
+          -0.135026645,
+          -0.003744075
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 99618.794991206,
+        "vector_mps2": [
+          0.164641532,
+          10.501449641,
+          -0.135026645
+        ],
+        "magnitude_mps2": 10.503608122515725,
+        "magnitude_g": 1.0710699497295944
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0028",
+      "frame_id": "frame_0028",
+      "frame_timestamp_ms": 99618.794991206
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        84914.307275563,
+        85114.307275563
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          0.000847191,
+          0.004817756
+        ],
+        "ay_mps2": [
+          9.409625699,
+          9.673795074
+        ],
+        "az_mps2": [
+          0.129257619,
+          0.201995197
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 84914.307275563,
+        "vector_mps2": [
+          0.000847191,
+          9.673795074,
+          0.201995197
+        ],
+        "magnitude_mps2": 9.675903777481993,
+        "magnitude_g": 0.9866675957112769
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0029",
+      "frame_id": "frame_0029",
+      "frame_timestamp_ms": 85114.307275563
+    },
+    {
+      "sample_count": 21,
+      "timestamp_range_ms": [
+        96877.219564542,
+        97077.219564542
+      ],
+      "duration_ms": 200.0,
+      "input_out_of_order_pairs": 0,
+      "input_timestamps_nondecreasing": true,
+      "input_timestamps_strictly_increasing": true,
+      "output_timestamps_strictly_increasing": true,
+      "duplicate_timestamp_count": 0,
+      "duplicate_timestamps": [],
+      "sample_intervals_ms": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "positive_interval_stats_ms": {
+        "count": 20,
+        "min": 10.0,
+        "median": 10.0,
+        "max": 10.0
+      },
+      "estimated_sampling_rate_hz": 100.0,
+      "sampling_rate_method": "1000 / median of positive consecutive timestamp differences in ms",
+      "missing_required_values": 0,
+      "invalid_numeric_values": 0,
+      "validation_policy": "fail on missing required or non-finite/invalid numeric values; no rows dropped",
+      "missing_optional_orientation_values": {
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "available_orientation_fields": [
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg"
+      ],
+      "acceleration_component_ranges_mps2": {
+        "ax_mps2": [
+          -0.111137327,
+          0.024431371
+        ],
+        "ay_mps2": [
+          10.226873153,
+          10.421734637
+        ],
+        "az_mps2": [
+          -0.021840749,
+          -0.003763552
+        ]
+      },
+      "peak_specific_force": {
+        "timestamp_ms": 96877.219564542,
+        "vector_mps2": [
+          0.024431371,
+          10.421734637,
+          -0.003763552
+        ],
+        "magnitude_mps2": 10.421763953393787,
+        "magnitude_g": 1.0627241671104595
+      },
+      "acceleration_policy": "all values retained unchanged; peaks are descriptive, with no rejection threshold",
+      "sequence_id": "frame_0030",
+      "frame_id": "frame_0030",
+      "frame_timestamp_ms": 97077.219564542
+    }
+  ]
+}
