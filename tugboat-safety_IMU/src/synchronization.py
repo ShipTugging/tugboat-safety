@@ -16,7 +16,7 @@ from .imu_schema import IMUSample, numeric_value
 
 DEFAULT_MAX_TIME_GAP_MS = 20.0
 VISION_REQUIRED_FIELDS = ("timestamp_ms", "towline_detected", "confidence")
-VISION_GEOMETRY_FIELDS = ("towline_angle_deg", "sag_ratio", "curvature")
+VISION_MASK_FIELDS = ("mask_base64", "mask_width", "mask_height")
 METADATA_FIELDS = ("session_id", "sequence_id", "frame_id", "frame_timestamp_ms")
 
 
@@ -65,24 +65,43 @@ def _boolean(value: object) -> bool:
 
 @dataclass(frozen=True)
 class VisionSample:
-    """Already computed upstream features; unavailable geometry stays None."""
+    """Upstream detection and opaque PNG/Base64 mask; no geometry extraction."""
 
     timestamp_ms: float
     towline_detected: bool
-    confidence: float
-    towline_angle_deg: float | None = None
-    sag_ratio: float | None = None
-    curvature: float | None = None
+    confidence: float | None
+    mask_base64: str | None = None
+    mask_width: int | None = None
+    mask_height: int | None = None
     metadata: Association = field(default_factory=Association)
 
     def __post_init__(self) -> None:
-        for name in ("timestamp_ms", "confidence", *VISION_GEOMETRY_FIELDS):
-            object.__setattr__(self, name, numeric_value(
-                name, getattr(self, name), optional=name in VISION_GEOMETRY_FIELDS,
-            ))
         object.__setattr__(self, "towline_detected", _boolean(self.towline_detected))
-        if not 0 <= self.confidence <= 1:
+        object.__setattr__(self, "timestamp_ms", numeric_value("timestamp_ms", self.timestamp_ms))
+        object.__setattr__(self, "confidence", numeric_value(
+            "confidence", self.confidence, optional=not self.towline_detected,
+        ))
+        if self.confidence is not None and not 0 <= self.confidence <= 1:
             raise ValueError("confidence: expected a value between 0 and 1")
+        if self.mask_base64 is not None:
+            if not isinstance(self.mask_base64, str) or not self.mask_base64.strip():
+                raise ValueError("mask_base64: expected a nonblank string or null")
+            if not self.towline_detected:
+                raise ValueError("mask_base64: must be null when towline_detected is false")
+        for name in ("mask_width", "mask_height"):
+            value = getattr(self, name)
+            if isinstance(value, int) and not isinstance(value, bool):
+                if value <= 0:
+                    raise ValueError(f"{name}: expected a positive integer")
+                continue  # Preserve JSON integer dimensions without a float round-trip.
+            number = numeric_value(name, value, optional=True)
+            if number is not None and (number <= 0 or not number.is_integer()):
+                raise ValueError(f"{name}: expected a positive integer")
+            object.__setattr__(self, name, int(number) if number is not None else None)
+        if (self.mask_width is None) != (self.mask_height is None):
+            raise ValueError("mask_width/mask_height: must both be present or both be absent")
+        if self.mask_base64 is not None and self.mask_width is None:
+            raise ValueError("mask_width/mask_height: required when mask_base64 is present")
         if not isinstance(self.metadata, Association):
             raise ValueError("metadata: expected Association")
 
@@ -90,12 +109,12 @@ class VisionSample:
     def from_mapping(cls, values: Mapping[str, object]) -> "VisionSample":
         values = _mapping(values)
         return cls(**{
-            name: values.get(name) for name in (*VISION_REQUIRED_FIELDS, *VISION_GEOMETRY_FIELDS)
+            name: values.get(name) for name in (*VISION_REQUIRED_FIELDS, *VISION_MASK_FIELDS)
         }, metadata=Association.from_mapping(values))
 
     def features(self) -> dict:
         return {name: getattr(self, name) for name in (
-            "towline_detected", "confidence", *VISION_GEOMETRY_FIELDS,
+            "towline_detected", "confidence", *VISION_MASK_FIELDS,
         )}
 
 
@@ -237,7 +256,7 @@ def synchronize(
 
     Invalid inputs abort with sample context, without dropping invalid rows.
     Empty Vision has an undefined (None) match rate; no matches have None gap
-    statistics. Missing geometry/orientation is valid and stays None.
+    statistics. Missing legacy CSV masks/orientation is valid and stays None.
     """
     matcher = NearestTimestampMatcher(imu_samples, max_time_gap_ms=max_time_gap_ms)
     records = []

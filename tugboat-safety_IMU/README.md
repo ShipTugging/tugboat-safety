@@ -3,7 +3,7 @@
 A standalone, timestamp-based IMU input and preprocessing pipeline for the
 tugboat safety prototype. The current adapter reads simulated IMU measurements;
 future physical IMU adapters can produce the same sensor interface.
-An additional synchronization layer pairs upstream Vision features with these
+An additional synchronization layer pairs upstream Vision detections/masks with these
 standardized measurements by timestamp. The Foundation pipeline is unchanged.
 
 ```text
@@ -164,8 +164,9 @@ transport integrations, live streaming, and multimodal models are not implemente
 
 `src/synchronization.py` contains no file I/O. Its public interfaces are:
 
-- `VisionSample(timestamp_ms, towline_detected, confidence, towline_angle_deg=None,
-  sag_ratio=None, curvature=None, metadata=Association())`: upstream features.
+- `VisionSample(timestamp_ms, towline_detected, confidence, mask_base64=None,
+  mask_width=None, mask_height=None, metadata=Association())`: upstream detection
+  and opaque mask. Missing masks are supported for legacy CSV/API inputs.
 - `IMURecord(sample: IMUSample, metadata=Association())`: the existing IMU type
   with optional metadata. Plain `IMUSample` values also work directly.
 - `Association(session_id=None, sequence_id=None, frame_id=None,
@@ -180,11 +181,14 @@ transport integrations, live streaming, and multimodal models are not implemente
 
 `VisionSample.from_mapping()` and `IMURecord.from_mapping()` accept the flat
 CSV field layout, including optional association columns. Required Vision
-fields are `timestamp_ms`, `towline_detected`, and `confidence`. Confidence is
-finite and in `[0, 1]`; no confidence cutoff affects synchronization. Detection
+fields are `timestamp_ms`, `towline_detected`, and `confidence`. When detected,
+confidence must be finite and in `[0, 1]`; null is a validation error. When not
+detected, confidence may be null (blank in CSV); existing valid numeric confidence
+still works. No confidence cutoff affects synchronization. Detection
 is a boolean (CSV also accepts case-insensitive `true`/`false` and `1`/`0`).
-Geometry fields may be absent, null, or blank. Present numeric values must be
-finite; no geometric meaning is inferred. IMU validation reuses `IMUSample`.
+Mask dimensions must be positive integers and supplied together. A supplied mask
+requires dimensions and detection=true; its string is stored unchanged.
+IMU validation reuses `IMUSample`.
 Unknown fields are excluded. Invalid samples fail with index/CSV line context,
 while valid samples lacking a match remain in the output.
 
@@ -201,7 +205,7 @@ imu = [
 ]
 vision = [
     VisionSample(1234.5, True, 0.94, metadata=Association(session_id="demo", frame_id="camera_1")),
-    VisionSample(1300.0, False, 0.1, metadata=Association(session_id="demo", frame_id="camera_2")),
+    VisionSample(1300.0, False, None, metadata=Association(session_id="demo", frame_id="camera_2")),
 ]
 records, diagnostics = synchronize(vision, imu, max_time_gap_ms=20)
 matched, unmatched = [record.to_dict() for record in records]
@@ -226,7 +230,7 @@ constant is used. A sample may match an earlier or later IMU sample. Equal
 distances choose the earlier timestamp, and duplicate timestamps choose the
 first original IMU input record. No duplicate averaging or interpolation occurs;
 the selected IMU values are preserved. A measurement can serve multiple Vision
-samples. Detection being false or geometry being unavailable does not prevent
+samples. Detection being false or a legacy mask being unavailable does not prevent
 timestamp matching.
 
 `time_delta_ms = imu_timestamp_ms - vision_timestamp_ms`. Acceptance is exactly
@@ -286,14 +290,14 @@ Rates are not estimated by this layer or used in matching.
 
 **CSV synchronization**
 
-Create/provide a small upstream Vision CSV using this header (geometry columns
-may be omitted or left blank); add `session_id`, `sequence_id`, `frame_id`, and
+Legacy flat CSV input/output remains supported. Create/provide a small upstream
+Vision CSV using this header; add `session_id`, `sequence_id`, `frame_id`, and
 `frame_timestamp_ms` as needed:
 
 ```csv
-timestamp_ms,towline_detected,confidence,towline_angle_deg,sag_ratio,curvature
-1234.5,true,0.94,,,
-1300.0,false,0.1,,,
+timestamp_ms,towline_detected,confidence
+1234.5,true,0.94
+1300.0,false,
 ```
 
 These mock timestamps require corresponding mock IMU data, as in the Python
@@ -319,16 +323,121 @@ from the matching logic.
 Output columns are `vision_timestamp_ms`, `imu_timestamp_ms`,
 `sync_time_delta_ms`, `sync_matched`, `sync_reason`,
 `sync_nearest_time_delta_ms`, `towline_detected`, `vision_confidence`, the three
-geometry fields, the nine IMU value/orientation fields, and separate
+mask fields, the nine IMU value/orientation fields, and separate
 `vision_`/`imu_`-prefixed association fields. Nulls become blank CSV cells;
 booleans become `True`/`False`. An empty Vision CSV with required headers writes
 an output header and empty diagnostics. A completely empty file without the
 required header is invalid.
 
+The former angle/sag/curvature CSV columns were removed from the output schema.
+Old CSV input columns are ignored as unknown fields; timestamps, confidence,
+detection and IMU matching retain their existing behavior. Optional mask input
+columns are `mask_base64`, `mask_width`, `mask_height`; CSV quoting preserves
+the mask string, including embedded newlines. JSONL is canonical for Vision V1.
+
+**Real-time Vision JSONL synchronization**
+
+The input is exactly the existing `vision_output.jsonl`, one object per line:
+
+```json
+{"timestamp_ms":0.0,"vision":{"towline_detected":true,"confidence":0.968,"mask_base64":"...","mask_width":1280,"mask_height":720}}
+```
+
+No-detection frames use this contract:
+
+```json
+{"timestamp_ms":1200.0,"vision":{"towline_detected":false,"confidence":null,"mask_base64":null,"mask_width":1280,"mask_height":720}}
+```
+
+All five nested Vision fields and the top-level timestamp are required. Detection
+must be a JSON boolean; present confidence must be a finite JSON number. A
+detected frame requires a nonblank mask string; no detection requires a null
+mask. Dimensions remain positive JSON integers even when there is no mask.
+The loader does not verify PNG/Base64 content, decode, resize, or re-encode masks.
+Strings and dimensions pass unchanged through matching and JSONL serialization.
+Unknown input fields, including obsolete geometry, are excluded from the output.
+Malformed JSON, missing fields and metadata conflicts identify the source line.
+Blank lines, duplicate JSON keys and nonfinite JSON numbers are errors.
+
+From `tugboat-safety_IMU`, with IMU from the **same recording and common clock**:
+
+```sh
+python3 -B run_sync.py \
+  --vision ../tugboat-safety_vision/outputs/run-001/vision_output.jsonl \
+  --imu /path/to/same-recording/imu_normalized.csv \
+  --output outputs/run-004/synchronized.jsonl \
+  --diagnostics outputs/run-004/sync_diagnostics.json \
+  --session-id run-004 \
+  --max-time-gap-ms 20
+```
+
+`/path/to/same-recording/imu_normalized.csv` is a placeholder for the user's actual
+preprocessed recording, not the supplied unrelated 30-scene simulator dataset.
+The MP4 timestamps start at zero and use source FPS; IMU must already use the
+same origin/units. A shared recording ID alone does not align different clocks.
+
+`--session-id` and optional `--sequence-id` supply boundary metadata only to
+Vision frames. Existing IMU boundary fields remain unchanged. The JSONL may
+already have top-level association fields or `metadata` (a flat association
+object, or `metadata.vision`). Known conflicts between those locations or with
+CLI-supplied values fail; equal values are accepted and missing values are filled.
+Session/sequence IDs are never inferred from timestamps or frame indices. A
+missing ID can match only when exactly one compatible IMU group remains; multiple
+compatible groups yield unmatched `ambiguous_metadata`. Session is primary,
+sequence further restricts it, and frame IDs remain debug metadata only.
+
+`.jsonl`/`.csv` extensions select input/output format automatically. Override with
+`--vision-format jsonl|csv` or `--output-format jsonl|csv` when needed. If `--output`
+is omitted, its extension follows the input format (or explicit output format),
+under `data/processed/vision_imu_sync`. CSV→JSONL and JSONL→CSV also work.
+
+Example matched output (shown across lines for readability; each saved record
+occupies one JSONL line):
+
+```json
+{
+  "timestamp_ms": 1200.0,
+  "vision": {
+    "towline_detected": true,
+    "confidence": 0.96,
+    "mask_base64": "...",
+    "mask_width": 1280,
+    "mask_height": 720
+  },
+  "imu": {
+    "timestamp_ms": 1197.0,
+    "ax_mps2": 0.12, "ay_mps2": 9.71, "az_mps2": -0.05,
+    "gx_rad_s": 0.021, "gy_rad_s": -0.004, "gz_rad_s": 0.031,
+    "roll_deg": null, "pitch_deg": null, "yaw_deg": null
+  },
+  "sync": {
+    "matched": true,
+    "time_delta_ms": -3.0,
+    "reason": null,
+    "nearest_time_delta_ms": null
+  },
+  "metadata": {
+    "vision": {"session_id":"run-004","sequence_id":null,"frame_id":null,"frame_timestamp_ms":null},
+    "imu": {"session_id":"run-004","sequence_id":null,"frame_id":null,"frame_timestamp_ms":null}
+  }
+}
+```
+
+Unmatched records retain the complete five-field Vision object and timestamp;
+`imu=null`, `sync.matched=false`, and `sync.time_delta_ms=null`. No detection is
+geometry unavailable, not a safety statement, and still participates in timestamp
+matching. No frames are dropped. Empty JSONL is valid and produces zero records.
+
+Synchronization produces detection/mask + IMU only. The downstream teammate
+decodes `mask_base64`, then computes `towline_angle_deg` and `sag_ratio` and applies
+risk logic. Those fields are absent from this input/output schema. Curvature is
+excluded from the project. This module performs none of those calculations and
+does not alter the Real-time Vision pipeline or model.
+
 The runner validates both inputs and computes results before writing. Validation
 failure preserves previous outputs and exits nonzero. Successful runs replace
 the requested output files. Input files, raw data paths, and colliding output
-paths are protected. The CSV and diagnostic JSON are not a transactional pair;
+paths are protected. The synchronized output and diagnostic JSON are not a transactional pair;
 a filesystem failure during writing can leave partial output.
 
 **Synchronization verification and limits**
@@ -342,6 +451,10 @@ rows and four irregular IMU samples. Its expected result at 20 ms is 5 matched,
 gap `9.1 ms`, median `7.5 ms`, and maximum `20 ms`. Other small fixtures cover
 non-100 Hz inputs, optional values, boundaries, duplicates, malformed data,
 empty inputs, CLI execution, and the unchanged Foundation dataset output.
+JSONL fixtures additionally verify nested parsing, null confidence, lossless opaque
+masks, matched/unmatched output, metadata injection/conflicts, boundary ambiguity,
+line errors, and nearest/tie/duplicate/frame-index regressions. No model inference
+or mask decoding is needed for these synchronization tests.
 
 The single-sample API can be reused against a future live buffer, but V1 builds
 a finite IMU snapshot; it does not accept an unbounded iterator, incrementally
@@ -361,7 +474,7 @@ interpolation, filtering, window aggregation, live server, API, or UI.
 - `src/preprocessing.py`: per-sequence sorting, validation, and diagnostics.
 - `run_pipeline.py`: offline grouping, CLI, CSV and JSON report writing.
 - `src/synchronization.py`: typed multimodal state, nearest matching, and diagnostics.
-- `run_sync.py`: standardized Vision/IMU CSV I/O and synchronization CLI.
+- `run_sync.py`: Vision JSONL/CSV adapter, standardized IMU CSV I/O, synchronized JSONL/CSV and CLI.
 - `tests/test_imu_pipeline.py`: unit tests and full supplied-dataset regression checks.
 - `tests/test_synchronization.py`: small mock features, synchronization and integration tests.
 - `outputs/data_inspection.md`: source field inventory and interpretation.

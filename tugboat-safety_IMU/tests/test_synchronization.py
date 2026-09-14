@@ -12,7 +12,7 @@ import sys
 import tempfile
 import unittest
 
-from run_sync import CSV_FIELDS, ROOT, flatten, load_csv, run
+from run_sync import CSV_FIELDS, ROOT, flatten, load_csv, load_vision_jsonl, run
 from run_pipeline import run as run_imu_pipeline
 from src.imu_schema import IMUSample, REQUIRED_FIELDS, SENSOR_FIELDS
 from src.preprocessing import preprocess
@@ -95,8 +95,8 @@ class MatchingTests(unittest.TestCase):
 
     def test_unmatched_preserves_all_vision_features_and_metadata(self):
         features = VisionSample.from_mapping(vision(
-            90, towline_detected=False, confidence=0.1, towline_angle_deg=42.1,
-            sag_ratio=0.051, curvature=0.17, session_id="s", frame_id="camera_9",
+            90, confidence=0.1, mask_base64="opaque-mask", mask_width=1280,
+            mask_height=720, session_id="s", frame_id="camera_9",
         ))
         record = NearestTimestampMatcher([imu(0, session_id="s")]).match(features)
         self.assertIs(record.vision, features)
@@ -135,16 +135,14 @@ class MatchingTests(unittest.TestCase):
         self.assertTrue(all(record.imu.sample is sample for record in records))
         self.assertEqual(records[0], records[2])
 
-    def test_optional_orientation_and_nullable_geometry(self):
+    def test_optional_orientation_and_missing_legacy_masks(self):
         for values in ({}, {"roll_deg": "", "pitch_deg": None, "yaw_deg": "12.5"},
                        {"roll_deg": 1, "pitch_deg": 2, "yaw_deg": 3}):
             with self.subTest(values=values):
-                record = NearestTimestampMatcher([imu(0, **values)]).match(vision(
-                    0, towline_angle_deg=None, sag_ratio="", curvature=None,
-                ))
+                record = NearestTimestampMatcher([imu(0, **values)]).match(vision(0))
                 self.assertEqual(record.imu.sample, IMUSample.from_mapping(imu(0, **values)))
                 self.assertTrue(all(record.vision.features()[key] is None
-                                    for key in ("towline_angle_deg", "sag_ratio", "curvature")))
+                                    for key in ("mask_base64", "mask_width", "mask_height")))
 
     def test_existing_preprocessing_result_can_be_used_directly(self):
         samples, before = preprocess([imu(30), imu(0), imu(15)])
@@ -305,8 +303,8 @@ class ValidationTests(unittest.TestCase):
         for field, value in [("timestamp_ms", "NaN"), ("timestamp_ms", True),
                              ("confidence", -0.1), ("confidence", 1.1), ("confidence", None),
                              ("towline_detected", None), ("towline_detected", "maybe"),
-                             ("towline_angle_deg", "nan"), ("sag_ratio", "bad"),
-                             ("curvature", float("inf")), ("session_id", 1),
+                             ("mask_base64", 12), ("mask_width", -1),
+                             ("mask_height", 1.5), ("session_id", 1),
                              ("sequence_id", "  "), ("frame_id", []),
                              ("frame_timestamp_ms", "nan")]:
             with self.subTest(field=field, value=value):
@@ -373,7 +371,7 @@ class CSVTests(unittest.TestCase):
         self.assertEqual(rows[2]["imu_frame_id"], "offline_debug")
         self.assertEqual(rows[2]["vision_confidence"], "0.94")
         self.assertEqual(rows[2]["roll_deg"], "")
-        self.assertEqual(rows[2]["curvature"], "")
+        self.assertEqual(rows[2]["mask_base64"], "")
         self.assertEqual(rows[5]["sync_matched"], "False")
         self.assertEqual(rows[5]["sync_reason"], "max_time_gap_exceeded")
         self.assertEqual(rows[5]["sync_nearest_time_delta_ms"], "-21.0")
@@ -465,6 +463,220 @@ class CSVTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Synchronization error", result.stderr)
         self.assertFalse(self.output.exists())
+
+
+class JSONLTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.directory = Path(self.temp.name)
+        self.vision_path = self.directory / "vision.jsonl"
+        self.imu_path = self.directory / "imu.csv"
+        self.output = self.directory / "synchronized.jsonl"
+        self.diagnostics = self.directory / "diagnostics.json"
+        # Intentionally opaque: sync must not attempt PNG/Base64 decoding.
+        self.mask = "opaque mask +/==\nkeep exactly"
+        self.document = {"timestamp_ms": 12.5, "vision": {
+            "towline_detected": True, "confidence": 0.96,
+            "mask_base64": self.mask, "mask_width": 1280, "mask_height": 720,
+        }}
+        self.write_documents([self.document])
+        write_csv(self.imu_path, [imu(10), imu(20)])
+
+    def write_documents(self, documents):
+        self.vision_path.write_text("".join(json.dumps(d) + "\n" for d in documents))
+
+    def run_sync(self, **kwargs):
+        return run(self.vision_path, self.imu_path, self.output, self.diagnostics, **kwargs)
+
+    def read_output(self):
+        return [json.loads(line) for line in self.output.read_text().splitlines()]
+
+    def test_nested_parsing_valid_confidence_and_lossless_mask(self):
+        sample = load_vision_jsonl(self.vision_path)[0]
+        self.assertEqual(sample.timestamp_ms, 12.5)
+        self.assertEqual(sample.features(), self.document["vision"])
+        self.assertEqual(sample.mask_base64.encode(), self.mask.encode())
+        self.assertEqual((sample.mask_width, sample.mask_height), (1280, 720))
+
+    def test_detected_null_confidence_is_rejected(self):
+        self.document["vision"]["confidence"] = None
+        self.write_documents([self.document])
+        with self.assertRaisesRegex(ValueError, "line 1: confidence"):
+            load_vision_jsonl(self.vision_path)
+
+    def test_no_detection_null_confidence_and_mask_survive_matching(self):
+        self.document["vision"].update(towline_detected=False, confidence=None, mask_base64=None)
+        self.write_documents([self.document, {**self.document, "timestamp_ms": 1000}])
+        self.run_sync()
+        rows = self.read_output()
+        self.assertTrue(rows[0]["sync"]["matched"])
+        self.assertFalse(rows[1]["sync"]["matched"])
+        self.assertIsNone(rows[1]["imu"])
+        for row in rows:
+            self.assertEqual(row["vision"], self.document["vision"])
+
+    def test_matched_jsonl_schema_signed_gap_and_original_imu(self):
+        before = (self.vision_path.read_bytes(), self.imu_path.read_bytes())
+        report = self.run_sync()
+        row = self.read_output()[0]
+        self.assertEqual(set(row), {"timestamp_ms", "vision", "imu", "sync", "metadata"})
+        self.assertEqual(row["vision"], self.document["vision"])
+        self.assertEqual(row["imu"], IMUSample.from_mapping(imu(10)).to_dict())
+        self.assertEqual(row["sync"], dict(matched=True, time_delta_ms=-2.5,
+                                          reason=None, nearest_time_delta_ms=None))
+        self.assertEqual(report["matched_samples"], 1)
+        self.assertEqual(json.loads(self.diagnostics.read_text()), report)
+        self.assertEqual((self.vision_path.read_bytes(), self.imu_path.read_bytes()), before)
+
+    def test_unmatched_preserves_timestamp_order_and_mask(self):
+        far = {**self.document, "timestamp_ms": 1000}
+        self.write_documents([far, self.document, far])
+        report = self.run_sync()
+        rows = self.read_output()
+        self.assertEqual([r["timestamp_ms"] for r in rows], [1000, 12.5, 1000])
+        self.assertEqual(report["unmatched_samples"], 2)
+        for row in (rows[0], rows[2]):
+            self.assertEqual(row["vision"], self.document["vision"])
+            self.assertIsNone(row["imu"])
+            self.assertIsNone(row["sync"]["time_delta_ms"])
+            self.assertEqual(row["sync"]["reason"], "max_time_gap_exceeded")
+
+    def test_malformed_json_line_number_and_previous_outputs_preserved(self):
+        self.output.write_text("previous output")
+        self.diagnostics.write_text("previous report")
+        with self.vision_path.open("a") as handle:
+            handle.write("{broken}\n")
+        with self.assertRaisesRegex(ValueError, "line 2:"):
+            self.run_sync()
+        self.assertEqual(self.output.read_text(), "previous output")
+        self.assertEqual(self.diagnostics.read_text(), "previous report")
+
+    def test_missing_and_wrong_json_fields_have_line_context(self):
+        for field in ("towline_detected", "confidence", "mask_base64", "mask_width", "mask_height"):
+            payload = {k: v for k, v in self.document["vision"].items() if k != field}
+            self.write_documents([{**self.document, "vision": payload}])
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, f"line 1:.*{field}"):
+                load_vision_jsonl(self.vision_path)
+        for document in ([], {"timestamp_ms": 1, "vision": []}, {"vision": self.document["vision"]}):
+            self.write_documents([document])
+            with self.subTest(document=document), self.assertRaisesRegex(ValueError, "line 1:"):
+                load_vision_jsonl(self.vision_path)
+
+    def test_mask_contract_invalid_types_sizes_and_detection_consistency(self):
+        cases = [("mask_width", 0), ("mask_height", 1.5), ("mask_width", True),
+                 ("mask_base64", None), ("mask_base64", 42), ("mask_base64", ""),
+                 ("confidence", float("inf")), ("confidence", "0.9"),
+                 ("towline_detected", "true")]
+        for field, value in cases:
+            payload = {**self.document["vision"], field: value}
+            self.write_documents([{**self.document, "vision": payload}])
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, "line 1:"):
+                load_vision_jsonl(self.vision_path)
+        self.document["vision"]["towline_detected"] = False
+        self.write_documents([self.document])
+        with self.assertRaisesRegex(ValueError, "mask_base64"):
+            load_vision_jsonl(self.vision_path)
+
+    def test_duplicate_json_keys_are_rejected(self):
+        self.vision_path.write_text('{"timestamp_ms":0,"timestamp_ms":1,"vision":{}}\n')
+        with self.assertRaisesRegex(ValueError, "line 1: duplicate JSON key"):
+            load_vision_jsonl(self.vision_path)
+
+    def test_session_and_sequence_injection(self):
+        sample = load_vision_jsonl(self.vision_path, session_id="run-004", sequence_id="clip-a")[0]
+        self.assertEqual(sample.metadata, Association(session_id="run-004", sequence_id="clip-a"))
+
+    def test_existing_metadata_and_injection_conflict_rejected(self):
+        for metadata in ({"session_id": "a"}, {"metadata": {"session_id": "a"}},
+                         {"metadata": {"vision": {"session_id": "a"}}}):
+            self.write_documents([{**self.document, **metadata}])
+            with self.subTest(metadata=metadata), self.assertRaisesRegex(ValueError, "line 1: session_id:.*conflicts"):
+                load_vision_jsonl(self.vision_path, session_id="b")
+            self.assertEqual(load_vision_jsonl(self.vision_path, session_id="a")[0].metadata.session_id, "a")
+
+    def test_sequence_conflict_and_top_level_nested_metadata_conflict(self):
+        self.write_documents([{**self.document, "sequence_id": "a"}])
+        with self.assertRaisesRegex(ValueError, "sequence_id:.*conflicts"):
+            load_vision_jsonl(self.vision_path, sequence_id="b")
+        self.write_documents([{**self.document, "session_id": "a", "metadata": {"session_id": "b"}}])
+        with self.assertRaisesRegex(ValueError, "session_id:.*conflicts"):
+            load_vision_jsonl(self.vision_path)
+
+    def test_multiple_imu_boundaries_are_ambiguous_then_explicit_scope_matches(self):
+        write_csv(self.imu_path, [imu(10, session_id="a"), imu(12.5, session_id="b")])
+        self.run_sync()
+        self.assertEqual(self.read_output()[0]["sync"]["reason"], "ambiguous_metadata")
+        self.assertEqual(self.read_output()[0]["vision"], self.document["vision"])
+        self.run_sync(session_id="a")
+        row = self.read_output()[0]
+        self.assertEqual(row["imu"]["timestamp_ms"], 10)
+        self.assertEqual(row["metadata"]["vision"]["session_id"], "a")
+        self.assertEqual(row["metadata"]["imu"]["session_id"], "a")
+
+    def test_jsonl_nearest_tie_duplicate_and_frame_index_regressions(self):
+        write_csv(self.imu_path, [imu(20, ax_mps2=2, frame_id="same"),
+                                 imu(0, ax_mps2=1, frame_id="different"),
+                                 imu(0, ax_mps2=99, frame_id="same")])
+        self.write_documents([{**self.document, "timestamp_ms": t, "frame_id": "same", "frame_index": 999}
+                              for t in (10, 19, 1)])
+        self.run_sync()
+        rows = self.read_output()
+        self.assertEqual([r["imu"]["timestamp_ms"] for r in rows], [0, 20, 0])
+        self.assertEqual([r["imu"]["ax_mps2"] for r in rows], [1, 2, 1])
+        self.assertEqual([r["sync"]["time_delta_ms"] for r in rows], [-10, 1, -1])
+
+    def test_geometry_fields_removed_from_jsonl_and_csv_contract(self):
+        removed = ("towline_angle_deg", "sag_ratio", "curvature")
+        self.document["vision"].update(dict.fromkeys(removed, 42))
+        self.write_documents([self.document])
+        self.run_sync()
+        for field in removed:
+            self.assertNotIn(field, self.read_output()[0]["vision"])
+            self.assertNotIn(field, CSV_FIELDS)
+        legacy = self.directory / "old-geometry.csv"
+        write_csv(legacy, [vision(10, **dict.fromkeys(removed, 42))])
+        run(legacy, self.imu_path, self.output, self.diagnostics)
+        for field in removed:
+            self.assertNotIn(field, self.read_output()[0]["vision"])
+
+    def test_jsonl_to_csv_and_legacy_csv_to_jsonl_preserve_masks_and_nulls(self):
+        csv_output = self.directory / "sync.csv"
+        run(self.vision_path, self.imu_path, csv_output, self.diagnostics)
+        with csv_output.open(newline="") as handle:
+            row = next(csv.DictReader(handle))
+        self.assertEqual(row["mask_base64"], self.mask)
+        self.assertEqual(row["mask_width"], "1280")
+        legacy = self.directory / "legacy.csv"
+        write_csv(legacy, [vision(10, towline_detected=False, confidence=None)])
+        run(legacy, self.imu_path, self.output, self.diagnostics)
+        self.assertIsNone(self.read_output()[0]["vision"]["confidence"])
+
+    def test_empty_jsonl_and_empty_imu_keep_existing_empty_semantics(self):
+        self.vision_path.write_text("")
+        report = self.run_sync()
+        self.assertIsNone(report["match_rate"])
+        self.assertEqual(self.output.read_text(), "")
+        self.write_documents([self.document])
+        write_csv(self.imu_path, [], fields=REQUIRED_FIELDS)
+        self.run_sync()
+        row = self.read_output()[0]
+        self.assertEqual(row["vision"], self.document["vision"])
+        self.assertEqual(row["sync"]["reason"], "no_imu_samples")
+        self.assertIsNone(row["imu"])
+
+    def test_cli_jsonl_boundary_injection_and_conflict_exit(self):
+        write_csv(self.imu_path, [imu(10, session_id="run-004")])
+        command = [sys.executable, "-B", str(ROOT / "run_sync.py"), "--vision", str(self.vision_path),
+                   "--imu", str(self.imu_path), "--output", str(self.output),
+                   "--diagnostics", str(self.diagnostics), "--session-id", "run-004"]
+        completed = subprocess.run(command, cwd=self.directory, text=True, capture_output=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertTrue(self.read_output()[0]["sync"]["matched"])
+        self.write_documents([{**self.document, "session_id": "other"}])
+        completed = subprocess.run(command, cwd=self.directory, text=True, capture_output=True)
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("conflicts", completed.stderr)
 
 
 class SuppliedDatasetSyncTests(unittest.TestCase):
