@@ -27,6 +27,9 @@ data/raw/
 # Generated / processed datasets
 data/processed/
 
+# Output
+outputs/
+
 # =========================
 # OS / IDE
 # =========================
