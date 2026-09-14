@@ -15,13 +15,19 @@ from .contract import binary_mask, select_instance, timestamp_ms, vision_record
 OUTPUT_NAMES = ("vision_output.jsonl", "vision_overlay.mp4", "summary.json")
 
 
-def resolve_device(requested: str, cuda_available: bool, cuda_count: int) -> str:
+def resolve_device(requested: str, cuda_available: bool, cuda_count: int,
+                   mps_available: bool = False) -> str:
     if requested == "cpu":
         return "cpu"
+    if requested == "mps":
+        if not mps_available:
+            raise ValueError("--device mps requested, but torch.backends.mps.is_available() is False; "
+                             "use --device cpu explicitly to run on CPU")
+        return "mps"
     if requested == "auto":
         return "0" if cuda_available and cuda_count > 0 else "cpu"
     if not requested.isdecimal():
-        raise ValueError("--device must be auto, cpu, or a CUDA index such as 0")
+        raise ValueError("--device must be auto, cpu, mps, or a CUDA index such as 0")
     if not cuda_available or cuda_count == 0:
         return "cpu"
     if int(requested) >= cuda_count:
@@ -37,7 +43,8 @@ def load_model(weights: Path, requested_device: str):
     import torch
     from ultralytics import YOLO
 
-    device = resolve_device(requested_device, torch.cuda.is_available(), torch.cuda.device_count())
+    device = resolve_device(requested_device, torch.cuda.is_available(), torch.cuda.device_count(),
+                            mps_available=requested_device == "mps" and torch.backends.mps.is_available())
     if requested_device not in ("cpu", "auto") and device == "cpu":
         print(f"CUDA is unavailable; --device {requested_device} falls back to CPU.", file=sys.stderr)
     model = YOLO(str(weights), task="segment")
@@ -110,8 +117,8 @@ def run_video(video: Path, weights: Path, output_dir: Path, conf: float = 0.25,
         raise ValueError(f"Local .pt weights do not exist: {weights}")
     if not math.isfinite(conf) or not 0 <= conf <= 1 or imgsz <= 0:
         raise ValueError("Require --conf in [0, 1] and positive --imgsz")
-    # Check spelling even when using an injected loader.
-    resolve_device(device, False, 0)
+    # Check spelling only; load_model checks actual MPS availability.
+    resolve_device(device, False, 0, mps_available=True)
     if output_dir.exists() and (not output_dir.is_dir() or any(output_dir.iterdir())):
         raise ValueError(f"Use a new or empty output directory: {output_dir}")
 

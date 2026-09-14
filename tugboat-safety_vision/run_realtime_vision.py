@@ -15,7 +15,7 @@ def main(argv=None):
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--conf", type=float, default=0.25)
     parser.add_argument("--imgsz", type=int, default=960)
-    parser.add_argument("--device", default="auto", help="auto: CUDA 0 if available, else CPU; or cpu / CUDA index")
+    parser.add_argument("--device", default="auto", help="auto: CUDA 0 if available, else CPU; or cpu / mps / CUDA index")
     args = parser.parse_args(argv)
     try:
         summary = run_video(args.video, args.weights, args.output_dir, args.conf, args.imgsz, args.device)

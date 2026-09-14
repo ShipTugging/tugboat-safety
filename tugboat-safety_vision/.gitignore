@@ -7,3 +7,5 @@ vision_overlay.mp4
 summary.json
 *.pt
 *.mp4
+weights/
+inputs/

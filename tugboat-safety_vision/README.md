@@ -34,6 +34,9 @@ exactly `{0: 'towline'}`. The runner does not download substitute weights.
 `--device auto` (default) chooses CUDA 0 when available, otherwise CPU. `--device 0`
 also falls back to CPU with a stderr message if CUDA is unavailable; an invalid
 index on a CUDA machine is an error. `--device cpu` always uses CPU.
+`--device mps` uses Apple's Metal backend when `torch.backends.mps.is_available()`
+is true; otherwise it fails explicitly without falling back to CPU. `auto` keeps
+its existing CUDA-then-CPU behavior; choose `mps` explicitly to use Metal.
 
 Use a new or empty output directory. A successful run creates:
 

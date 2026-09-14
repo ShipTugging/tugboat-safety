@@ -17,7 +17,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from run_realtime_vision import main
 from vision.contract import binary_mask, encode_mask_png, select_instance, timestamp_ms, vision_record
-from vision.pipeline import overlay_frame, prediction, resolve_device, run_video
+from vision.pipeline import load_model, overlay_frame, prediction, resolve_device, run_video
 
 
 def decode_mask(encoded):
@@ -118,6 +118,39 @@ class PredictionTests(unittest.TestCase):
             resolve_device("2", True, 2)
         with self.assertRaises(ValueError):
             resolve_device("cuda:bad", False, 0)
+
+    def test_mps_resolution_preserves_cpu_cuda_and_auto_policy(self):
+        self.assertEqual(resolve_device("mps", False, 0, mps_available=True), "mps")
+        self.assertEqual(resolve_device("mps", True, 2, mps_available=True), "mps")
+        self.assertEqual(resolve_device("auto", False, 0, mps_available=True), "cpu")
+        self.assertEqual(resolve_device("auto", True, 2, mps_available=True), "0")
+        self.assertEqual(resolve_device("cpu", True, 2, mps_available=True), "cpu")
+        self.assertEqual(resolve_device("0", False, 0, mps_available=True), "cpu")
+        self.assertEqual(resolve_device("1", True, 2, mps_available=True), "1")
+
+    def test_mps_unavailable_fails_without_fallback(self):
+        for cuda_available, cuda_count in ((False, 0), (True, 2)):
+            with self.subTest(cuda=cuda_available), self.assertRaisesRegex(
+                ValueError, r"--device mps requested.*is_available\(\) is False"
+            ):
+                resolve_device("mps", cuda_available, cuda_count, mps_available=False)
+
+    def test_model_loader_checks_mps_availability_without_inference(self):
+        for available in (True, False):
+            model = SimpleNamespace(task="segment", names={0: "towline"})
+            fake_torch = SimpleNamespace(
+                cuda=SimpleNamespace(is_available=lambda: False, device_count=lambda: 0),
+                backends=SimpleNamespace(mps=SimpleNamespace(is_available=lambda: available)),
+            )
+            with self.subTest(available=available), patch.dict(os.environ), patch.dict(sys.modules, {
+                "torch": fake_torch,
+                "ultralytics": SimpleNamespace(YOLO=lambda *args, **kwargs: model),
+            }):
+                if available:
+                    self.assertEqual(load_model(Path("mock-only.pt"), "mps"), (model, "mps"))
+                else:
+                    with self.assertRaisesRegex(ValueError, r"--device mps requested.*is_available\(\) is False"):
+                        load_model(Path("mock-only.pt"), "mps")
 
     def test_overlay_changes_only_mask_and_hud(self):
         frame = np.full((180, 320, 3), 70, np.uint8)
@@ -274,6 +307,23 @@ class VideoSmokeTests(unittest.TestCase):
             run_video(self.video, self.weights, output,
                       model_loader=lambda *args: (SimpleNamespace(predict=broken), "cpu"))
         self.assertFalse((output / "summary.json").exists())
+
+    def test_cli_mps_parsing_reaches_loader_and_predictor(self):
+        mock_loader, calls = self.mock_loader()
+
+        def mps_loader(weights, requested):
+            self.assertEqual(requested, "mps")
+            model, _ = mock_loader(weights, requested)
+            return model, resolve_device(requested, False, 0, mps_available=True)
+
+        stdout = io.StringIO()
+        with patch("vision.pipeline.load_model", mps_loader), contextlib.redirect_stdout(stdout):
+            status = main(["--video", str(self.video), "--weights", str(self.weights),
+                           "--output-dir", str(self.root / "mps-cli"), "--device", "mps"])
+        self.assertEqual(status, 0)
+        self.assertEqual(json.loads(stdout.getvalue())["device_used"], "mps")
+        self.assertEqual(len(calls), 6)
+        self.assertTrue(all(call["device"] == "mps" for call in calls))
 
     def test_cli_stdout_is_summary_and_bad_input_exits_nonzero(self):
         loader, _ = self.mock_loader()
