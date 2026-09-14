@@ -1,0 +1,9 @@
+__pycache__/
+.venv/
+outputs/
+realtime_vision_output/
+vision_output.jsonl
+vision_overlay.mp4
+summary.json
+*.pt
+*.mp4
