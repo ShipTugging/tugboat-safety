@@ -1,24 +1,29 @@
 """
 TUGGUARD - 통합 파이프라인 서버 (강영한 담당)
 
-역할: Three.js 시뮬레이터가 보낸 이미지+IMU 데이터를 받아서,
-     (지금은 더미 mask로 대체된) YOLO-Seg 결과와 risk_pipeline.py를
-     거쳐 위험판단 JSON을 만들고, 다시 Three.js로 돌려준다.
+역할: Three.js 시뮬레이터/실카메라가 보낸 이미지+IMU 데이터를 받아서,
+     제원이의 실제 YOLO-Seg 모델(models/best.pt, 클래스: {0: 'towline'})
+     추론 결과와 risk_pipeline.py를 거쳐 위험판단 JSON을 만들고,
+     다시 클라이언트로 돌려준다.
 
-[Three.js] --POST(image, imu)--> [이 서버] --JSON--> [Three.js UI]
+[Client] --POST(image, imu)--> [이 서버] --JSON--> [Client]
 
-지금 단계 목표: 구조가 끊김 없이 도는지 검증 (더미 mask 사용).
-나중에 할 일: run_yolo_seg() 자리에 제원이의 실제 YOLO-Seg 추론 코드 연결.
+image_base64가 오면 실제 YOLO 추론(run_yolo_seg)을 쓰고, 오지 않으면
+(예: 이미지 없이 구조만 검증하는 더미 테스트) sag_ratio_hint/angle_hint_deg
+기반 더미 mask(run_yolo_seg_dummy)로 폴백한다.
 """
 
 import base64
-import io
 import time
+from contextlib import asynccontextmanager
+from pathlib import Path
 
+import cv2
+import numpy as np
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import numpy as np
+from ultralytics import YOLO
 
 from risk_pipeline import (
     generate_dummy_mask,
@@ -26,7 +31,15 @@ from risk_pipeline import (
     RiskStateClassifier,
 )
 
-app = FastAPI(title="TUGGUARD Integration Server")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 첫 /analyze 요청에서 로딩 지연이 생기지 않도록 서버 기동 시점에 미리 로드
+    get_model()
+    yield
+
+
+app = FastAPI(title="TUGGUARD Integration Server", lifespan=lifespan)
 
 # Three.js(브라우저)에서 다른 포트로 요청이 오니까 CORS 허용 필요
 app.add_middleware(
@@ -42,30 +55,76 @@ app.add_middleware(
 classifier = RiskStateClassifier(window=5)
 _start_time = time.time()
 
+# tugboat-safety/models/best.pt (이 파일 기준 두 단계 위 디렉토리)
+MODEL_PATH = Path(__file__).resolve().parents[2] / "models" / "best.pt"
+_yolo_model: YOLO | None = None
+
+
+def get_model() -> YOLO:
+    """모델을 최초 1회만 로드하고 이후 재사용 (매 요청마다 로드하면 느려짐)."""
+    global _yolo_model
+    if _yolo_model is None:
+        _yolo_model = YOLO(str(MODEL_PATH))
+    return _yolo_model
+
 
 class FrameRequest(BaseModel):
-    """Three.js가 매 프레임 보내는 데이터 형태."""
-    image_base64: str | None = None   # data:image/jpeg;base64,... (지금은 안 씀, 더미 mask 사용)
+    """클라이언트가 매 프레임 보내는 데이터 형태."""
+    image_base64: str | None = None   # data:image/jpeg;base64,... 또는 순수 base64
     roll_deg: float = 0.0
     roll_rate_deg_s: float = 0.0
-    confidence: float = 0.9           # 실제로는 YOLO가 뱉어주는 값 (지금은 클라이언트가 임의로 넣어 테스트)
-    # 더미 mask 생성용 (실전에서는 YOLO가 실제 이미지로 계산하므로 불필요해짐)
+    confidence: float = 0.9           # image_base64 없이 더미 테스트할 때만 사용
+    # 더미 mask 생성용 (image_base64가 없을 때의 폴백 경로에서만 사용)
     sag_ratio_hint: float = 0.15
     angle_hint_deg: float = 30.0
 
 
-def run_yolo_seg_dummy(sag_ratio_hint: float, angle_hint_deg: float) -> np.ndarray:
-    """
-    지금은 제원이의 실제 YOLO-Seg 모델이 없으므로, 힌트값으로 그럴듯한
-    mask를 만들어서 파이프라인 구조만 검증한다.
+def decode_image_base64(image_base64: str) -> np.ndarray:
+    """data URL 접두사(data:image/...;base64,) 유무에 상관없이 BGR 이미지로 디코딩."""
+    if image_base64.startswith("data:") and "," in image_base64:
+        image_base64 = image_base64.split(",", 1)[1]
+    raw = base64.b64decode(image_base64)
+    image = cv2.imdecode(np.frombuffer(raw, dtype=np.uint8), cv2.IMREAD_COLOR)
+    if image is None:
+        raise ValueError("image_base64를 이미지로 디코딩하지 못했습니다.")
+    return image
 
-    TODO(제원 모델 연동 시): 이 함수를 아래처럼 교체
-        def run_yolo_seg(image: np.ndarray) -> tuple[np.ndarray, float]:
-            results = yolo_model.predict(image)
-            mask = results[0].masks.data[0].cpu().numpy()
-            confidence = float(results[0].boxes.conf[0])
-            return mask, confidence
+
+def run_yolo_seg(image: np.ndarray) -> tuple[np.ndarray | None, float]:
     """
+    제원이의 YOLO-Seg 모델(단일 클래스 'towline')로 추론.
+
+    반환: (mask, confidence)
+      - mask: image와 동일한 원본 해상도 (H, W), nonzero == towline.
+        towline이 검출되지 않으면 None.
+      - confidence: 검출 confidence (0.0 ~ 1.0). 미검출 시 0.0.
+
+    mask 해상도 복원 방법: r.masks.xy(이미 원본 해상도 기준 polygon 좌표)를
+    cv2.fillPoly로 새 (H, W) 배열에 직접 그린다 (r.masks.data를 cv2.resize로
+    확대하는 방법 대비 채택). camera.mp4 프레임 0/120/240/360/479에서 두
+    방법을 synchronized.jsonl의 검증된 mask와 비교했을 때, resize는 960x544
+    -> 1280x720 보간 과정에서 skeleton 경계가 흐트러져 sag_ratio/각도 오차가
+    더 컸고, polygon 재작도 방식이 대부분의 프레임에서 ground-truth에 더
+    가까웠다 (세부 비교는 handoff 문서 참고).
+    """
+    model = get_model()
+    results = model(image, verbose=False)
+    r = results[0]
+
+    if r.masks is None or r.boxes is None or len(r.boxes.conf) == 0:
+        return None, 0.0
+
+    h, w = image.shape[:2]
+    mask = np.zeros((h, w), dtype=np.uint8)
+    polygon = r.masks.xy[0].astype(np.int32)
+    cv2.fillPoly(mask, [polygon], 1)
+
+    confidence = float(r.boxes.conf[0])
+    return mask, confidence
+
+
+def run_yolo_seg_dummy(sag_ratio_hint: float, angle_hint_deg: float) -> np.ndarray:
+    """image_base64 없이 구조만 확인할 때 쓰는 힌트 기반 더미 mask (기존 동작 유지)."""
     return generate_dummy_mask(sag_ratio_hint, angle_hint_deg)
 
 
@@ -78,12 +137,34 @@ def health_check():
 @app.post("/analyze")
 def analyze_frame(req: FrameRequest):
     """
-    Three.js가 프레임마다 호출할 메인 엔드포인트.
-    지금은 image_base64를 실제로 디코딩해서 YOLO에 넣지 않고,
-    sag_ratio_hint/angle_hint_deg로 더미 mask만 만들어서 구조를 검증한다.
+    클라이언트가 프레임마다 호출하는 메인 엔드포인트.
+    image_base64가 있으면 실제 YOLO-Seg 추론(run_yolo_seg)을 쓰고,
+    없으면 힌트 기반 더미 mask로 폴백한다.
     """
-    mask = run_yolo_seg_dummy(req.sag_ratio_hint, req.angle_hint_deg)
-    confidence = req.confidence
+    timestamp = round(time.time() - _start_time, 3)
+
+    if req.image_base64:
+        image = decode_image_base64(req.image_base64)
+        mask, confidence = run_yolo_seg(image)
+    else:
+        mask = run_yolo_seg_dummy(req.sag_ratio_hint, req.angle_hint_deg)
+        confidence = req.confidence
+
+    if mask is None:
+        # towline 미검출: geometry 계산을 시도하지 않고 UNKNOWN으로 분류한다.
+        # (risk_pipeline.process_synchronized_record가 synchronized.jsonl의
+        # towline_detected == False를 다루는 것과 동일한 컨벤션 -- SAFE가 아님)
+        return {
+            "timestamp": timestamp,
+            "fusion_mode": None,
+            "confidence": round(confidence, 3),
+            "sag_ratio": None,
+            "towline_angle_pixel_deg": None,
+            "towline_angle_corrected_deg": None,
+            "roll_deg": round(req.roll_deg, 2),
+            "roll_rate_deg_s": round(req.roll_rate_deg_s, 2),
+            "risk_state": "UNKNOWN",
+        }
 
     result = process_frame(
         mask=mask,
@@ -91,7 +172,7 @@ def analyze_frame(req: FrameRequest):
         roll_deg=req.roll_deg,
         roll_rate_deg_s=req.roll_rate_deg_s,
         classifier=classifier,
-        timestamp=round(time.time() - _start_time, 3),
+        timestamp=timestamp,
     )
     return result
 

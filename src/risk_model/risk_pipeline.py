@@ -16,11 +16,14 @@ TUGGUARD - 예인선 거딩 위험 감지 파이프라인 (강영한 담당 파�
 YOLO-Seg 추론 결과(mask, confidence)를 꽂아 넣으면 된다.
 """
 
+import base64
+import io
 import json
 import math
 from collections import deque
 
 import numpy as np
+from PIL import Image
 from skimage.morphology import skeletonize
 
 
@@ -76,11 +79,39 @@ def extract_skeleton_points(mask: np.ndarray) -> np.ndarray:
 
 def order_points_along_line(points: np.ndarray) -> np.ndarray:
     """
-    skeleton 좌표는 순서가 없으므로, y좌표(세로 위치) 기준으로 정렬해서
-    "선을 따라가는 순서"를 근사한다. (예인줄은 대체로 세로 방향으로 뻗어있다고 가정)
+    skeleton 좌표들의 주성분(PCA, 분산이 가장 큰 방향)을 구해서 그 축에
+    투영한 값 기준으로 정렬한다. 예인줄의 화면상 방향(세로/가로/대각선
+    등)에 관계없이 "선을 따라가는 순서"를 안정적으로 근사한다.
+
+    (기존에는 y좌표만 보고 정렬했는데, 이는 예인줄이 대체로 세로
+    방향이라는 가정에 의존한다. camera.mp4 기준 실측 데이터에서 예인줄이
+    대각선/가로에 가깝게 뻗어있는 프레임이 확인되어, 방향에 무관하게
+    동작하도록 일반화했다.)
+
+    PCA(SVD)로 구한 주축은 부호(+/-)가 프레임마다 임의로 뒤집힐 수 있다
+    (축 자체는 유일하지만 방향은 수학적으로 동등한 두 선택지가 있음).
+    이를 그대로 두면 points[0]/points[-1]이 프레임마다 임의로 뒤바뀌어
+    compute_towline_angle_pixel()이 계산하는 각도가 프레임 간 약 180도씩
+    튀는 문제가 생긴다. 이를 막기 위해 정렬 후 항상 points[-1](예인선
+    쪽 끝)의 y좌표가 points[0](상선 쪽 끝)보다 크도록(화면에서 더
+    아래) 방향을 고정한다 -- 카메라가 예인선에 설치되어 있어 예인줄이
+    연결된 쪽이 항상 화면 하단에 더 가깝다는 촬영 구도를 이용한
+    기준점 고정이다.
     """
-    order = np.argsort(points[:, 1])
-    return points[order]
+    if len(points) < 2:
+        return points
+
+    centered = points - points.mean(axis=0)
+    _, _, vt = np.linalg.svd(centered)
+    main_axis = vt[0]
+    projections = centered @ main_axis
+    order = np.argsort(projections)
+    ordered = points[order]
+
+    if ordered[-1, 1] < ordered[0, 1]:
+        ordered = ordered[::-1]
+
+    return ordered
 
 
 # ---------------------------------------------------------------------------
@@ -301,6 +332,179 @@ def process_frame(mask: np.ndarray, confidence: float, roll_deg: float,
         "risk_state": risk_state,
     }
     return result
+
+
+# ---------------------------------------------------------------------------
+# 7.5 synchronized.jsonl (실 데이터) 처리
+# ---------------------------------------------------------------------------
+def decode_mask_base64(mask_base64: str, width: int, height: int) -> np.ndarray:
+    """
+    synchronized.jsonl의 vision.mask_base64 필드(PNG를 base64 인코딩한
+    문자열)를 디코딩해서 (height, width) 형태의 grayscale numpy 배열로
+    반환한다.
+
+    synchronization-risk_pipeline_handoff/visualize_frame.py 등에서 이미
+    검증된 것과 동일한 디코딩 방식(PIL로 PNG를 열고 L 모드로 통일해
+    numpy 배열화)을 그대로 재사용한다 -- 새로 발명하지 않는다.
+    """
+    raw = base64.b64decode(mask_base64)
+    img = Image.open(io.BytesIO(raw))
+    if img.mode != "L":
+        img = img.convert("L")
+    img.load()
+
+    mask = np.array(img)
+    assert mask.shape == (height, width), (
+        f"decoded mask shape {mask.shape} != expected (height, width)=({height}, {width})"
+    )
+    return mask
+
+
+def process_synchronized_record(record: dict, classifier: RiskStateClassifier,
+                                 roll_rate_deg_s: float = 0.0) -> dict:
+    """
+    synchronized.jsonl의 record 하나를 처리한다. process_frame()과 흐름은
+    동일하지만, 실제 synchronized.jsonl 스키마(vision.mask_base64,
+    vision.towline_detected, vision.confidence, imu.roll_deg)를 직접
+    입력으로 받고, README_DOWNSTREAM.md에 명시된 대로
+    towline_detected == False를 SAFE가 아니라 UNKNOWN으로 처리하는 로직,
+    그리고 skeleton 점이 너무 적어 geometry 계산이 불가능한 경우를
+    UNAVAILABLE로 처리하는 로직을 추가한 버전이다.
+
+    decode_mask_base64 / extract_skeleton_points / order_points_along_line /
+    compute_sag_ratio / compute_towline_angle_pixel / correct_roll /
+    decide_fusion_mode / classifier.update는 process_frame()과 완전히
+    동일하게 그대로 재사용한다 -- 이 함수는 이들을 "연결"할 뿐 계산
+    방식 자체를 바꾸지 않는다.
+    """
+    vision = record["vision"]
+    imu = record["imu"]
+    timestamp_ms = record["timestamp_ms"]
+    confidence = vision["confidence"]
+
+    result = {
+        "timestamp_ms": timestamp_ms,
+        "towline_detected": vision["towline_detected"],
+        "confidence": round(confidence, 3) if confidence is not None else None,
+        "fusion_mode": None,
+        "skeleton_point_count": None,
+        "sag_ratio": None,
+        "towline_angle_pixel_deg": None,
+        "towline_angle_corrected_deg": None,
+        "roll_deg": round(imu["roll_deg"], 2),
+        "roll_rate_deg_s": round(roll_rate_deg_s, 2),
+        "risk_state": None,
+    }
+
+    # README_DOWNSTREAM.md: towline_detected == False는 SAFE가 아니라
+    # invalid state(UNKNOWN)로 처리해야 함 -- geometry 계산 자체를
+    # 시도하지 않는다.
+    if not vision["towline_detected"]:
+        result["risk_state"] = "UNKNOWN"
+        return result
+
+    fusion_mode = decide_fusion_mode(confidence)
+    result["fusion_mode"] = fusion_mode
+
+    if fusion_mode == "imu_only":
+        # process_frame()과 동일: confidence가 너무 낮아 비전 값을
+        # 신뢰하지 않는 경우, geometry 계산 자체를 하지 않는다.
+        result["risk_state"] = classifier.update(0.0, 0.0, roll_rate_deg_s, fusion_mode)
+        return result
+
+    mask = decode_mask_base64(vision["mask_base64"], vision["mask_width"], vision["mask_height"])
+    points = extract_skeleton_points(mask)
+    result["skeleton_point_count"] = len(points)
+
+    # skeleton이 너무 부실해서(2점 미만) 직선/각도 계산이 애초에 불가능한 경우.
+    # towline_detected는 True였지만 geometry를 못 뽑는 케이스라 UNKNOWN과
+    # 구분해서 UNAVAILABLE로 분류한다.
+    if len(points) < 2:
+        result["risk_state"] = "UNAVAILABLE"
+        return result
+
+    points = order_points_along_line(points)
+    sag_ratio = compute_sag_ratio(points)
+    beta = compute_towline_angle_pixel(points)
+    gamma = correct_roll(beta, imu["roll_deg"])
+    if fusion_mode == "imu_primary":
+        # process_frame()과 동일: 비전 값은 참고만 하고 각도 신뢰도를 낮춤
+        gamma = gamma * 0.5
+
+    risk_state = classifier.update(sag_ratio, gamma, roll_rate_deg_s, fusion_mode)
+
+    result.update({
+        "sag_ratio": round(sag_ratio, 4),
+        "towline_angle_pixel_deg": round(beta, 2),
+        "towline_angle_corrected_deg": round(gamma, 2),
+        "risk_state": risk_state,
+    })
+    return result
+
+
+def process_synchronized_jsonl(jsonl_path: str) -> list[dict]:
+    """
+    synchronized.jsonl의 모든 record에 대해 mask decode -> skeleton 추출
+    -> sag_ratio/angle 계산 -> roll 보정 -> risk state 분류까지 전부
+    수행하고, 프레임별 결과 리스트를 반환한다.
+
+    - vision.towline_detected == False인 프레임: geometry 계산을 시도하지
+      않고 risk_state="UNKNOWN"으로 분류 (README_DOWNSTREAM.md 요구사항).
+    - skeleton 점이 2개 미만이라 직선/각도 계산이 애초에 불가능한 프레임:
+      risk_state="UNAVAILABLE"로 분류.
+    - 예상치 못한 예외가 발생한 프레임: 파이프라인 전체를 죽이지 않고
+      risk_state="ERROR"로 기록하고 나머지 프레임 처리를 계속한다 (예외
+      처리만 추가한 것이며, geometry 계산 로직 자체는 바꾸지 않았다).
+
+    roll_rate_deg_s는 synchronized.jsonl에 직접 제공되지 않아, 연속된
+    두 record의 roll_deg 차이를 timestamp 간격(초)으로 나눠 근사한다
+    (첫 프레임은 이전 값이 없어 0.0).
+    """
+    results = []
+    classifier = RiskStateClassifier(window=5)
+    prev_roll_deg = None
+    prev_timestamp_ms = None
+
+    with open(jsonl_path, "r") as f:
+        for line_number, line in enumerate(f):
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            timestamp_ms = record["timestamp_ms"]
+            roll_deg = record["imu"]["roll_deg"]
+
+            if prev_timestamp_ms is not None:
+                dt_s = (timestamp_ms - prev_timestamp_ms) / 1000.0
+                roll_rate_deg_s = (roll_deg - prev_roll_deg) / dt_s if dt_s > 1e-9 else 0.0
+            else:
+                roll_rate_deg_s = 0.0
+
+            try:
+                result = process_synchronized_record(record, classifier, roll_rate_deg_s)
+            except Exception as exc:  # noqa: BLE001 -- deliberately broad: one bad frame must not kill the 480-frame batch
+                result = {
+                    "timestamp_ms": timestamp_ms,
+                    "towline_detected": record.get("vision", {}).get("towline_detected"),
+                    "confidence": None,
+                    "fusion_mode": None,
+                    "skeleton_point_count": None,
+                    "sag_ratio": None,
+                    "towline_angle_pixel_deg": None,
+                    "towline_angle_corrected_deg": None,
+                    "roll_deg": round(roll_deg, 2),
+                    "roll_rate_deg_s": round(roll_rate_deg_s, 2),
+                    "risk_state": "ERROR",
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+
+            result["frame_index"] = line_number
+            results.append(result)
+
+            prev_roll_deg = roll_deg
+            prev_timestamp_ms = timestamp_ms
+
+    return results
 
 
 # ---------------------------------------------------------------------------
